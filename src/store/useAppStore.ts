@@ -12,6 +12,12 @@ interface AppState {
   actProgress: Record<ActId, number>;
   /** The act currently filling most of the viewport. */
   activeAct: ActId;
+  /**
+   * True while an act is within a padded band around the viewport. This is what
+   * mounts and unmounts 3D content (§5.2) — padded so an act is pre-warmed
+   * before it is seen, rather than compiling shaders in the visitor's face.
+   */
+  actNear: Record<ActId, boolean>;
 
   deviceTier: DeviceTier;
   reducedMotion: boolean;
@@ -21,6 +27,9 @@ interface AppState {
   setGlobalProgress: (p: number) => void;
   setActProgress: (act: ActId, p: number) => void;
   setActiveAct: (act: ActId) => void;
+  setActNear: (act: ActId, near: boolean) => void;
+  /** Demote only. See `demoteTier`. */
+  demoteTier: () => void;
   setDeviceTier: (tier: DeviceTier) => void;
   setReducedMotion: (v: boolean) => void;
   setReady: (v: boolean) => void;
@@ -38,6 +47,7 @@ export const useAppStore = create<AppState>((set) => ({
   globalProgress: 0,
   actProgress: zeroed(),
   activeAct: 'hero',
+  actNear: { hero: true, origin: false, journey: false, product: false, quality: false },
   deviceTier: 'high',
   reducedMotion: false,
   ready: false,
@@ -51,6 +61,21 @@ export const useAppStore = create<AppState>((set) => ({
     ),
 
   setActiveAct: (act) => set((s) => (s.activeAct === act ? s : { activeAct: act })),
+
+  setActNear: (act, near) =>
+    set((s) => (s.actNear[act] === near ? s : { actNear: { ...s.actNear, [act]: near } })),
+
+  /**
+   * Tier only ever goes DOWN, and never back up within a session.
+   *
+   * A tier that can be promoted again will oscillate the moment the measurement
+   * sits near the threshold, and the visitor sees the scene change quality
+   * mid-scroll — which is far worse than simply running one notch conservative.
+   */
+  demoteTier: () =>
+    set((s) => ({
+      deviceTier: s.deviceTier === 'high' ? 'mid' : 'low',
+    })),
   setDeviceTier: (tier) => set({ deviceTier: tier }),
   setReducedMotion: (v) => set({ reducedMotion: v }),
   setReady: (v) => set({ ready: v }),

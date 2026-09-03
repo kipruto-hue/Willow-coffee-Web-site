@@ -26,5 +26,10 @@ jobs:
       - name: Test (copy fidelity + render smoke)
         run: npm test
 
-      - name: Build
+      - name: Build (includes the static prerender)
         run: npm run build
+
+      # §9 is a promise the build cannot keep on its own: one stray static
+      # import of the canvas silently ships 1MB of three.js to phone visitors.
+      - name: Bundle budget and code-split guard
+        run: npm run check:bundle

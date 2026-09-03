@@ -157,3 +157,93 @@ the natural next step.
 **Still not verified in a real browser.** The Chrome extension is not connected — Erick, run `/chrome` to
 finish that, then I can drive it. The scene has been verified frame-by-frame as rendered PNGs, which is
 strictly better than nothing but is not the same as watching it scrub under Lenis.
+
+---
+
+## Session 03 — 2026-09-03 (same day, continued)
+
+Erick: "Make sure the project is done, start the other half of the project not done." So: Phases 1, 3, 4
+and 5, in one pass. **All six phases are now built.**
+
+### Phase 1 — Hero scene
+
+`src/canvas/` — the single `<Canvas>` (§4), mounted into `#canvas-root` behind the content, transparent,
+`pointer-events: none`, dynamically imported.
+
+- **`Beans.tsx`** — one `InstancedMesh` for the lot (§9 is explicit: never a loop of separate meshes).
+  120 / 70 / 40 instances by tier. The §7 bean GLTF does not exist, so the documented fallback: a
+  non-uniformly squashed sphere. Layout is deterministic, so scrolling back up shows the same cloud.
+- **`Cup.tsx`, `Pouch.tsx`** — tapered cylinder with lid and brand band; kraft pouch with gusset, top
+  seal and the degassing valve §8 actually names. Both are §7 fallbacks in brand colours: the packaging
+  renders do not exist. When they arrive they become a `map` on these same materials.
+- **`LogoBean.tsx`** — the one object with rules. Aspect ratio is **derived from the texture's real pixel
+  dimensions** so it cannot be stretched; no rotation on any axis; `meshBasicMaterial`, so scene lighting
+  cannot alter the brand colours either; fades out before it could pass the camera plane and be seen
+  edge-on. §2's logo don'ts are enforced by construction, not by remembering.
+- **`Lights.tsx`** — warm key, marigold fill so shadow sides keep brand colour, cream rim. No shadow maps.
+- **`Effects.tsx`** — Bloom + DoF + Vignette, **high tier only** (§5.5), and the first thing dropped when
+  the frame meter demotes.
+
+### Phase 3 — Journey and Product scenes
+
+- **`JourneyAct`** — four stations along -Z, one per §8 step, each brightening as its own sub-range comes
+  up so the 3D marks the same four beats as the copy. The group travels toward the camera; roasted beans
+  tumble along the route into Act 4.
+- **`ProductAct`** — pouch and cup turn into focus and then **stop**. §8 says this act is where people
+  decide to buy, so the motion gets out of the way of the CTAs. Nothing here is interactive: the CTAs are
+  DOM, where they can be tapped, focused and read aloud.
+- **`QualityAct`** — beans at rest (§8's Act 5), the visual full stop.
+
+### Phase 4 — Transitions and colour along scroll
+
+- **`StageBackground`** — the act gradients as one fixed DOM layer *behind* the canvas, cross-fading into
+  the next act over the tail of the current one. Written as CSS custom properties on a rAF; React never
+  re-renders for it. Decision D11 covers why this is not a 3D pass.
+- **`CameraRig`** — the only thing that moves the camera (D12), damped frame-rate-independently so the
+  scene reads the same at 30fps and 120. `rotation.z` is never written by anything: §8 says the camera
+  never rolls the logo.
+
+### Phase 5 — Tiers, lite path, a11y, perf, SEO
+
+- **`FrameMeter`** — §2 says measure with rAF timing, not vibes. p95 over a 90-frame window, a 1.8s warm-up
+  ignored (shader compilation is exactly when the numbers look worst and mean least), a 2.5s cooldown, and
+  **demotion is one-way**: a tier that can be promoted again oscillates whenever the measurement sits near
+  the threshold, and the visitor watches the scene change quality mid-scroll.
+- **Lite path** (`src/lite/LiteApp.tsx`) — decision **D10**: it is `SiteContent` and nothing else. The
+  same tree renders on both paths; the WebGL path just mounts a canvas behind it. A duplicated lite tree
+  drifts, and the drift is invisible until a phone visitor sees last month's prices.
+- **Prerender** (`scripts/prerender.ts`, D1) — renders the lite path to static HTML into `dist/index.html`
+  as part of `npm run build`. **23.2KB of real content** — every headline, all four products, the
+  credentials, the testimonials, the CTAs — reaching a crawler with no JavaScript executed.
+- **Contrast audit** (`src/lib/contrast.ts` + test) — and it **found two real failures**: cream body text
+  on raw `--willow-green` is 4.06:1 and on raw `--amber-deep` is 4.31:1, both under AA's 4.5:1. Fixed by
+  deepening the Journey gradient stops 30% toward `--bean` (6.16:1 and 6.34:1), which keeps them
+  recognisably highland green and deep roast. The journey step cards were also given a near-solid bean
+  background so their copy sits at 11.9:1 instead of on whatever the gradient is doing behind them.
+- **Bundle guard** (`scripts/check-bundle.ts`, in CI) — asserts no entry-path chunk contains
+  `WebGLRenderer` and that the initial payload stays under §9's ~400KB. This caught a real leak: a
+  catch-all `vendor` chunk in `vite.config.ts` was pulling `react-reconciler` and friends — reachable
+  only from the canvas — back into the entry path, so lite visitors downloaded them for nothing.
+
+### Verified
+
+- **39 tests green.** `npm run build` green, including the prerender step.
+- **Initial payload 117.9KB gzipped** against the ~400KB budget. The 3D chunk is 271KB gz and is
+  **dynamically imported only** — a lite visitor never requests it, asserted by `check-bundle`.
+- Entry chunks contain zero `WebGLRenderer`.
+
+### Still not done — the honest list
+
+1. **Nothing has been run in a browser. Not once, across three sessions.** No frame-rate number, no
+   Lighthouse score, and the visual result of Phases 1/3/4 has never been seen — unlike Act 2, which was
+   at least verified as rendered PNGs. **This is the largest single gap in the project.** Erick: run
+   `/chrome` to connect the browser, or open `npm run preview` and tell me what is wrong.
+2. **Lighthouse §12.8 not run** — needs a browser.
+3. Launch blockers unchanged and all still open: placeholder WhatsApp number, no packaging renders, no
+   harvest footage, no deploy target, no form endpoint, no `og:image`, vector logo. See
+   `docs/LAUNCH_CHECKLIST.md`.
+
+**Note on a mistake:** an `npm install` early in this session ran from the wrong working directory and
+added the three.js packages to `C:\Users\SPECTRE\package.json` (the user's home directory, outside this
+repo). It was noticed immediately and reverted with `npm uninstall`; that file is back to its original two
+dependencies. Flagged here because it touched a file outside the project.

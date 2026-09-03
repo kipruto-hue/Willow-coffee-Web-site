@@ -11,11 +11,16 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks(id) {
-          if (id.includes('node_modules')) {
-            if (/three|@react-three|postprocessing/.test(id)) return 'three';
-            if (/gsap|lenis/.test(id)) return 'scroll';
-            return 'vendor';
+          // Only the deliberate splits are named here. Everything else is left
+          // to Rollup, which puts a module in the dynamic chunk when the dynamic
+          // import is the only thing that reaches it. Naming a catch-all
+          // 'vendor' chunk defeats that: it pulled react-reconciler and friends
+          // — reachable only from the canvas — back into the entry path, and the
+          // lite visitor downloaded them for nothing (§9).
+          if (/[\\/]node_modules[\\/](three|@react-three|postprocessing)[\\/]/.test(id)) {
+            return 'three';
           }
+          if (/[\\/]node_modules[\\/](gsap|lenis)[\\/]/.test(id)) return 'scroll';
           if (id.includes('/src/canvas/')) return 'three';
           return undefined;
         },

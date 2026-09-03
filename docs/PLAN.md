@@ -1,8 +1,8 @@
 # BUILD PLAN — Willow Coffee Immersive Scroll Site
 
 Derived from `docs/MASTER_PROMPT.md` (the source of truth). Written 2026-09-03, before any code.
-Status of this document: **approved by Erick, 2026-09-03.** Phases 0 and 2 are built; Phase 1 is
-not (it was skipped at Erick's direction — Phase 2 does not depend on it). See `PROGRESS.md`.
+Status of this document: **approved by Erick, 2026-09-03. All six phases built.** See `PROGRESS.md`
+for what is verified and what still blocks launch.
 
 ---
 
@@ -32,6 +32,9 @@ be overruled.
 | D6 | **Fonts self-hosted from the Google Fonts OFL originals** (Fredoka + Inter), subset to latin, WOFF2, `font-display: swap`, preloaded. | §3 and §6 require self-hosting; OFL permits it. Subsetting keeps the display face under budget. |
 | D7 | **CI: GitHub Actions running typecheck + build + the copy-fidelity test on every push.** | Phase gate in §13 says "at the end of each phase the site must build". A machine should enforce that, not memory. |
 | D8 | **Typography is normalised, wording is not.** The site typesets curly apostrophes and quotes; the fidelity test normalises curly↔straight and collapses whitespace before comparing. | The brief is plain text and its straight quotes are an artefact of that, not a design instruction. Normalising the *shape* while asserting every word means the test catches real drift instead of failing on a typographic improvement. Punctuation *presence* is still asserted. |
+| D10 | **The lite path IS the content layer, not a second copy of it.** `SiteContent` renders on both paths; `LiteApp` is `SiteContent` and nothing else; the WebGL path is the same tree with a canvas mounted behind it. | §10 wants "same copy, same products, same CTAs" on the no-WebGL path. The only way to *guarantee* sameness is for there to be one copy — a duplicated lite tree drifts, and the drift is invisible until a phone visitor sees last month's prices. Same reasoning as D2. Nothing in `LiteApp`'s import graph reaches `three`, which is what keeps the 3D chunk off the wire (asserted by `scripts/check-bundle.ts`). |
+| D11 | **Act backgrounds are a fixed DOM layer, not a 3D pass.** The canvas is transparent and draws only objects; `StageBackground` cross-fades the gradients by writing CSS custom properties on a rAF. | A full-screen fragment pass every frame, on the devices with the least headroom, for a result no viewer could distinguish from a CSS gradient. It also means the act colours — and therefore every text-contrast pairing — are identical whether WebGL is on or off. |
+| D12 | **One writer for the camera** (`CameraRig`). Acts animate their own objects and never touch it. | When two components both write `camera.position` the result is not a compromise, it is a fight that surfaces as a jitter nobody can trace back to a line of code. |
 | D9 | **Act scroll ranges are measured from the sections' real positions (a ScrollTrigger per section), not hardcoded global fractions.** | §5.2 gives "Hero 0.0 to 0.2, Origin 0.2 to 0.45" as an example. Section heights change with copy and breakpoints; a hardcoded range silently desynchronises from the content when they do, and the failure is a scene that leads or lags the words by half a screen. The ranges still exist — they are just derived. |
 
 ---
@@ -84,9 +87,9 @@ pause on hidden tab and scrolled-past canvas; prerender script (D1); Lighthouse 
    scroll callback.
 3. **Tier detection that flaps** turns into a visible mode-switch mid-scroll. Hysteresis and a
    one-way-down demotion (never auto-promote back mid-session) prevent that.
-4. **60fps is a measured claim, not an aspiration.** §2 says measure with rAF timing. A dev-only overlay
-   reports p50/p95 frame time per act; the phase is not done until the numbers are recorded in
-   `docs/PROGRESS.md`.
+4. **60fps is a measured claim, not an aspiration.** §2 says measure with rAF timing. `FrameMeter`
+   samples p95 frame time inside the render loop and demotes the tier when the device cannot hold ~30fps.
+   **The number itself has not been recorded on real hardware** — that needs a browser session.
 5. **Copy drift** across four consumers — handled by D2 plus the fidelity test.
 
 ---

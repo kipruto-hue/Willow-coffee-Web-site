@@ -1,79 +1,75 @@
-import { useEffect } from 'react';
+import { Suspense, lazy, useEffect, useState } from 'react';
 import { SmoothScroll } from './scroll/SmoothScroll';
 import { useGlobalProgress } from './scroll/useScrollProgress';
 import { useAppStore } from './store/useAppStore';
-import { detectStaticTier, prefersReducedMotion } from './lib/device';
-import { structuredData } from './lib/structuredData';
-
+import { detectStaticTier, hasWebGL, prefersReducedMotion, shouldUseWebGL } from './lib/device';
 import { Preloader } from './dom/Preloader';
-import { Nav } from './dom/Nav';
-import { HeroCopy } from './dom/HeroCopy';
-import { OriginCopy } from './dom/OriginCopy';
-import { JourneyCopy } from './dom/JourneyCopy';
-import { Products } from './dom/Products';
-import { Quality } from './dom/Quality';
-import { Testimonials } from './dom/Testimonials';
-import { Contact } from './dom/Contact';
-import { Footer } from './dom/Footer';
-import { StickyCTA } from './dom/StickyCTA';
+import { SiteContent } from './SiteContent';
+import { StageBackground } from './stage/StageBackground';
 
 import './styles/globals.css';
 import './styles/components.css';
 
 /**
- * Phase 0: the whole site as real DOM, no WebGL (master prompt §13).
+ * The routing decision, and nothing else.
  *
- * The canvas mounts into #canvas-root in Phase 1 and this content layer does not
- * change — that separation is the point of §2's "content is real DOM" rule, and
- * it is why this phase is already shippable on its own.
+ * `SiteContent` always renders — it is the site, and it is identical on both
+ * paths (§10). The only question this component answers is whether a canvas
+ * gets mounted behind it.
+ *
+ * `Scene` is a dynamic import so the 3D chunk is never even requested on the
+ * lite path (§9: "code-split the canvas so the lite path never downloads it").
  */
+const Scene = lazy(() => import('./canvas/Scene'));
+
 export function App() {
   useGlobalProgress();
 
-  // Device tier and motion preference are read once and kept live: a visitor can
-  // flip reduced-motion mid-session and the site must follow them.
+  const deviceTier = useAppStore((s) => s.deviceTier);
+  const reducedMotion = useAppStore((s) => s.reducedMotion);
+  const ready = useAppStore((s) => s.ready);
+  const [webglOk, setWebglOk] = useState(true);
+
   useEffect(() => {
     const { setDeviceTier, setReducedMotion } = useAppStore.getState();
     setDeviceTier(detectStaticTier());
     setReducedMotion(prefersReducedMotion());
+    setWebglOk(hasWebGL());
 
+    // A visitor can turn reduced motion on mid-session and the site must follow
+    // them — including all the way off the WebGL path.
     const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
     const onChange = () => setReducedMotion(motionQuery.matches);
     motionQuery.addEventListener('change', onChange);
     return () => motionQuery.removeEventListener('change', onChange);
   }, []);
 
+  // Hold the canvas back until the preloader has handed over, so shader
+  // compilation happens behind the loader rather than in the visitor's face.
+  const useWebGL = webglOk && ready && shouldUseWebGL(deviceTier, reducedMotion);
+
+  // Acts with 3D content drop their own backgrounds and let the stage show
+  // through. Driven by an attribute so the CSS stays declarative and there is
+  // exactly one switch.
+  useEffect(() => {
+    document.documentElement.dataset.webgl = useWebGL ? 'true' : 'false';
+  }, [useWebGL]);
+
   return (
     <SmoothScroll>
       <Preloader />
 
-      <a className="skip-link" href="#content">
-        Skip to content
-      </a>
+      {useWebGL && <StageBackground />}
 
-      <Nav />
+      <div id="canvas-root" aria-hidden="true">
+        {useWebGL && (
+          <Suspense fallback={null}>
+            <Scene />
+          </Suspense>
+        )}
+      </div>
 
-      {/* Phase 1 mounts the single <Canvas> here, fixed behind the content. */}
-      <div id="canvas-root" aria-hidden="true" />
-
-      <main id="content" tabIndex={-1}>
-        <HeroCopy />
-        <OriginCopy />
-        <JourneyCopy />
-        <Products />
-        <Quality />
-        <Testimonials />
-        <Contact />
-      </main>
-
-      <Footer />
-      <StickyCTA />
-
-      <script
-        type="application/ld+json"
-        // Structured data is static, brand-authored content — no user input reaches it.
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData()) }}
-      />
+      <SiteContent />
     </SmoothScroll>
   );
 }

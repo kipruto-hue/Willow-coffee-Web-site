@@ -431,8 +431,8 @@
 .journey {
   background: linear-gradient(
     180deg,
-    var(--willow-green) 0%,
-    var(--amber-deep) 52%,
+    var(--journey-top) 0%,
+    var(--journey-mid) 52%,
     var(--maroon) 100%
   );
   color: var(--cream);
@@ -461,7 +461,9 @@
   padding: var(--space-m);
   border: 1px solid color-mix(in srgb, var(--cream) 22%, transparent);
   border-radius: var(--radius);
-  background: color-mix(in srgb, var(--bean) 24%, transparent);
+  /* Near-solid bean, so the step copy is cream on #43280B (11.9:1) rather than
+     cream on whatever the gradient happens to be behind it. */
+  background: color-mix(in srgb, var(--bean) 78%, transparent);
 }
 
 .step__number {
@@ -934,4 +936,58 @@
 
 .preloader__mark {
   height: clamp(84px, 12vw, 132px);
+}
+
+/* ============================================================== stage == */
+
+/*
+ * The act backgrounds, as one fixed layer BEHIND the canvas (Phase 4).
+ *
+ * Only mounted on the WebGL path. Acts that carry 3D content go transparent so
+ * this shows through and can cross-fade along scroll; acts that are pure DOM
+ * keep their own opaque backgrounds and simply cover it.
+ *
+ * The custom properties are written by StageBackground on a rAF. Their initial
+ * values are the hero gradient, so the very first paint is correct even before
+ * a single frame has run.
+ */
+#stage-bg {
+  position: fixed;
+  inset: 0;
+  z-index: calc(var(--z-canvas) - 1);
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    var(--stage-0, var(--amber-yellow)) 0%,
+    var(--stage-1, var(--amber-orange)) 58%,
+    var(--stage-2, var(--amber-deep)) 100%
+  );
+}
+
+:root[data-webgl='true'] .hero,
+:root[data-webgl='true'] .journey,
+:root[data-webgl='true'] .product,
+:root[data-webgl='true'] .quality {
+  background: transparent;
+}
+
+/*
+ * The hero is the only act whose copy sits over open canvas at large sizes, so
+ * it gets a soft scrim on the text side. Contrast is a promise (§10), not
+ * something to leave to whatever a bean happens to be doing behind a word.
+ */
+:root[data-webgl='true'] .hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    100deg,
+    color-mix(in srgb, var(--amber-yellow) 55%, transparent) 0%,
+    transparent 62%
+  );
+}
+
+:root[data-webgl='true'] .hero__inner {
+  position: relative;
 }

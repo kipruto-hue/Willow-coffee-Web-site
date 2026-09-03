@@ -1,21 +1,21 @@
 import { describe, expect, it } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { App } from './App';
+import { LiteApp } from './lite/LiteApp';
 import { brand, hero, products } from './content/site';
 
 /**
- * Smoke test for the content layer.
+ * Smoke test for the lite path — which is also exactly what the build-time
+ * prerender emits (scripts/prerender.ts), so this asserts the bytes a crawler
+ * and a low-tier phone actually receive.
  *
  * Two jobs. First, a blank page is the failure mode nobody notices until it is
  * live — this fails the build if the tree throws while rendering. Second, it
- * proves the §11 / D1 prerender is viable: everything asserted below is present
- * in static HTML with no browser, no effects, and no JavaScript executed by the
- * crawler.
+ * proves §10's promise that the no-WebGL path carries the same copy, the same
+ * products and the same CTAs, with no browser and no JavaScript executed.
  *
  * Effects do not run here, so this checks reachability of content, not behaviour.
- * Behaviour is Phase 5's job, once there is something worth driving a browser for.
  */
-const html = renderToStaticMarkup(<App />);
+const html = renderToStaticMarkup(<LiteApp />);
 
 describe('the site renders as static HTML', () => {
   it('renders without throwing and produces real markup', () => {

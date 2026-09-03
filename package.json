@@ -7,17 +7,23 @@
   "license": "MIT",
   "scripts": {
     "dev": "vite",
-    "build": "tsc --noEmit && vite build",
+    "build": "tsc --noEmit && vite build && vite-node scripts/prerender.ts",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "render:harvest": "vite-node scripts/render-harvest-frames.ts"
+    "render:harvest": "vite-node scripts/render-harvest-frames.ts",
+    "prerender": "vite-node scripts/prerender.ts",
+    "check:bundle": "vite-node scripts/check-bundle.ts"
   },
   "dependencies": {
+    "@react-three/drei": "^10.7.8",
+    "@react-three/fiber": "^9.7.0",
+    "@react-three/postprocessing": "^3.1.1",
     "gsap": "^3.13.0",
     "lenis": "^1.3.11",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
+    "three": "^0.185.1",
     "zustand": "^5.0.8"
   },
   "devDependencies": {

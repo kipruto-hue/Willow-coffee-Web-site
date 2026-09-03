@@ -19,6 +19,17 @@
   --willow-green: #6e7b2e; /* highland foliage, Origin act only */
   --maroon: #6e1e1a; /* deep roast, Journey step 04 */
 
+  /*
+   * Journey gradient stops.
+   *
+   * Raw --willow-green and --amber-deep carry cream body text at only 4.06:1 and
+   * 4.31:1 — both under the 4.5:1 AA floor §10 requires. Deepening each toward
+   * --bean by 30% takes them to 6.16:1 and 6.34:1 while staying recognisably
+   * highland green and deep roast. Asserted in contrast.test.ts.
+   */
+  --journey-top: #5e5b20; /* color-mix(--willow-green 70%, --bean) */
+  --journey-mid: #8e4107; /* color-mix(--amber-deep 70%, --bean) */
+
   /* ---- Derived roles -------------------------------------------------- */
   /* Contrast against --marigold and --cream is checked in Phase 5 (§10).   */
   --ink: var(--bean);

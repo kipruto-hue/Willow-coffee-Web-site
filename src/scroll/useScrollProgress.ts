@@ -35,7 +35,7 @@ export function useActProgress(act: ActId, ref: RefObject<HTMLElement | null>) {
     const el = ref.current;
     if (!el) return;
 
-    const { setActProgress, setActiveAct } = useAppStore.getState();
+    const { setActProgress, setActiveAct, setActNear } = useAppStore.getState();
 
     const progress = ScrollTrigger.create({
       trigger: el,
@@ -55,9 +55,20 @@ export function useActProgress(act: ActId, ref: RefObject<HTMLElement | null>) {
       },
     });
 
+    // Padded band: an act's 3D content mounts before the act is on screen, so
+    // geometry and shaders are ready rather than compiling in the visitor's face
+    // (§5.2, "plus a small buffer so entry is pre-warmed").
+    const near = ScrollTrigger.create({
+      trigger: el,
+      start: 'top bottom+=60%',
+      end: 'bottom top-=60%',
+      onToggle: (self) => setActNear(act, self.isActive),
+    });
+
     return () => {
       progress.kill();
       active.kill();
+      near.kill();
     };
   }, [act, ref]);
 }

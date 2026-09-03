@@ -42,13 +42,15 @@ consumers (WebGL path, lite path, prerender, JSON-LD) and guarded by a fidelity 
 
 ## Current phase
 
-**Phase 0 complete** — the whole site as real DOM, zero WebGL, shippable as-is.
-**Phase 2 complete** — Act 2's scroll-scrubbed harvest scene (`src/origin/`), with the real
-image-sequence path already built behind `HARVEST_MANIFEST` for when the footage exists.
+**All six phases built.** The full scroll experience: hero scene, scrubbed origin, journey
+travel, product bring-forward, cross-fading act backgrounds, device tiers, lite path,
+prerender, contrast audit, bundle budget.
 
-**Phase 1 (the hero WebGL scene) is still outstanding** — three.js is not in the tree yet.
-See `docs/PROGRESS.md`.
+**Not yet done:** nothing has run in a real browser, so no frame-rate figure and no Lighthouse
+score have been recorded, and the launch blockers in `docs/LAUNCH_CHECKLIST.md` (starting with
+the placeholder WhatsApp number) are open. See `docs/PROGRESS.md`.
 
 ```bash
 npm run render:harvest   # dev-only: render Act 2's frames to .render/ and look at them
+npm run check:bundle     # asserts the lite path downloads no three.js, and the 400KB budget
 ```
