@@ -12,14 +12,18 @@ the human".
 - [ ] **Confirm `info@willowscoffee.co.ke`** is the live inbox, and that someone reads it.
 - [ ] **Verify the brand hexes** in `src/styles/tokens.css` against the master brand file.
       They were sampled from the supplied PDF and renders, not taken from a spec.
-- [ ] **Replace the placeholder logo** (`src/dom/LogoMark.tsx`) with the official SVG, and
-      re-check the §2 logo rules against every act and every device tier.
+- [ ] **Supply a vector logo.** The real mark is in the tree (`public/brand/willow-logo.png`)
+      but as a 256×341 raster. Get an SVG before it is used large or in 3D, and re-check the
+      §2 logo rules against every act and every device tier.
 - [ ] **Lock usage rights on the harvest footage** before it ships. See `docs/ASSETS.md`.
 - [ ] **Pick the form endpoint.** The contact form currently composes a `mailto:` — honest,
       but not a submission pipeline. See build plan D5.
 - [ ] **Supply or approve the placeholder strings** in `docs/COPY_GAPS.md`.
 - [ ] **Add an `og:image`.** There is no social card art, so `index.html` deliberately ships
       without the tag rather than pointing at nothing.
+- [ ] **Reconcile the logo's stroke colour.** §6 describes cream (`#F7F0DA`) willow branches;
+      the real artwork uses pure white. The asset ships as supplied — §2 forbids recolouring
+      the logo — but the brand should confirm which is correct.
 
 ## Verification — the acceptance criteria in §12
 

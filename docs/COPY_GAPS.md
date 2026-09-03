@@ -16,7 +16,6 @@ or approve. None of them makes a claim about the coffee.
 | Footer column headings | `quick links`, `our coffees`, `contact` | Taken from the §8 footer description, which names the columns but not their exact headings. |
 | Preloader label | `brewing…` / `welcome` | Placeholder. |
 | Nav order button | `order on whatsapp` | Taken verbatim from the §8 footer, reused in the nav and sticky CTA. |
-| Origin media caption | `north rift · nandi hills · kitale` | Placeholder label on the fallback panel; disappears when the real harvest sequence lands. |
 
 **Expansions, not inventions:** the three §8 packaging blurbs are given as a title plus a
 parenthetical. Their bodies in `src/content/site.ts` carry **only** that supplied detail —

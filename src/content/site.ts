@@ -33,18 +33,22 @@ export const brand = {
 export const meta = {
   title: 'willow coffee — warm coffee, grown with nature',
   /**
-   * §11 says to carry over "the existing meta description" — it was never supplied.
-   * This is a PLACEHOLDER built only from facts stated elsewhere in §8; it invents
-   * no new claim. Confirm or replace before launch (docs/LAUNCH_CHECKLIST.md).
+   * §11: "carry over the existing meta". These are the brand's OWN strings, lifted
+   * from the existing Willow site — not written here. Same for the keywords and
+   * the shorter Open Graph description below.
    */
   description:
-    'Specialty single-origin arabica from Kenya’s North Rift. Hand-picked at 2,100m in Nandi Hills and Kitale, small-batch roasted, packaged for retail, wholesale and export.',
+    'willow coffee is a contemporary coffee brand inspired by the relationship between coffee, nature and the places where it’s grown. Warm, approachable specialty coffee from Kenya’s North Rift.',
+  ogDescription:
+    'Contemporary specialty coffee inspired by coffee, nature and the places where it’s grown. From Kenya’s North Rift.',
   keywords: [
+    'willow coffee',
     'Kenyan coffee',
     'North Rift coffee',
     'specialty arabica',
     'Nandi Hills coffee',
-    'single origin',
+    'single origin coffee Kenya',
+    'coffee pouches',
     'wholesale coffee Kenya',
   ],
 } as const;

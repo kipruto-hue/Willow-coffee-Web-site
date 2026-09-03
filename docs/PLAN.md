@@ -1,7 +1,8 @@
 # BUILD PLAN — Willow Coffee Immersive Scroll Site
 
 Derived from `docs/MASTER_PROMPT.md` (the source of truth). Written 2026-09-03, before any code.
-Status of this document: **approved by Erick, 2026-09-03.** Phase 0 is built; see `PROGRESS.md`.
+Status of this document: **approved by Erick, 2026-09-03.** Phases 0 and 2 are built; Phase 1 is
+not (it was skipped at Erick's direction — Phase 2 does not depend on it). See `PROGRESS.md`.
 
 ---
 

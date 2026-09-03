@@ -1,14 +1,15 @@
 import { useRef } from 'react';
 import { origin } from '../content/site';
 import { useActProgress } from '../scroll/useScrollProgress';
+import { OriginSequence } from '../origin/OriginSequence';
 
 /**
  * Act 2 — Origin (master prompt §8).
  *
- * The media panel is the §7 still fallback: the scrubbed harvest sequence does
- * not exist yet (docs/ASSETS.md). It is a brand-coloured highland field, not a
- * stock photo standing in for a farm we cannot show — the brief's "no fake data"
- * spirit applies to imagery of a real place as much as to copy.
+ * The media panel holds the scroll-scrubbed harvest scene. The real North Rift
+ * footage does not exist yet, so it renders rather than pretends — see
+ * src/origin/harvestScene.ts. The moment real frames land, only
+ * `HARVEST_MANIFEST` changes; nothing in this file does.
  */
 export function OriginCopy() {
   const ref = useRef<HTMLElement>(null);
@@ -34,8 +35,13 @@ export function OriginCopy() {
           </ul>
         </div>
 
-        <div className="origin__media" role="img" aria-label="North Rift highland farm">
-          <p>north rift · nandi hills · kitale</p>
+        {/*
+          Decorative: the paragraphs above carry the meaning, so the scene is
+          hidden from assistive tech rather than described with a caption that
+          would be inventing brand copy.
+        */}
+        <div className="origin__media" aria-hidden="true">
+          <OriginSequence />
         </div>
       </div>
     </section>

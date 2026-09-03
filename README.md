@@ -43,4 +43,12 @@ consumers (WebGL path, lite path, prerender, JSON-LD) and guarded by a fidelity 
 ## Current phase
 
 **Phase 0 complete** — the whole site as real DOM, zero WebGL, shippable as-is.
-Next: Phase 1, the hero scene. See `docs/PROGRESS.md`.
+**Phase 2 complete** — Act 2's scroll-scrubbed harvest scene (`src/origin/`), with the real
+image-sequence path already built behind `HARVEST_MANIFEST` for when the footage exists.
+
+**Phase 1 (the hero WebGL scene) is still outstanding** — three.js is not in the tree yet.
+See `docs/PROGRESS.md`.
+
+```bash
+npm run render:harvest   # dev-only: render Act 2's frames to .render/ and look at them
+```

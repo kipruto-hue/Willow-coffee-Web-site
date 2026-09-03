@@ -26,10 +26,7 @@
   visibility: hidden;
 }
 
-.preloader__mark {
-  width: clamp(84px, 12vw, 132px);
-  height: auto;
-}
+/* Sizing lives with the other logo rules, at the end of this file. */
 
 .preloader__bar {
   width: min(220px, 50vw);
@@ -89,9 +86,7 @@
   color: var(--bean);
 }
 
-.nav__brand svg {
-  width: 2.25rem;
-  height: 2.25rem;
+.nav__brand img {
   flex: none;
 }
 
@@ -372,33 +367,63 @@
 }
 
 /*
- * Origin visual. Phase 2 replaces this with the scrubbed harvest sequence;
- * until those frames exist it is the §7 still + parallax fallback, built from
- * brand colour only — no stock photo stands in for the farm.
+ * Origin visual — the scrubbed harvest scene (Act 2).
+ *
+ * On desktop the act is deliberately tall and the panel sticks, so there is real
+ * scroll distance for the sequence to be scrubbed through: §8 says the sequence
+ * spans this act's range and no further. On narrow screens it stays a normal
+ * inline panel — sticky media next to sticky copy is a trap on a phone.
  */
 .origin__media {
   position: relative;
   aspect-ratio: 4 / 5;
   border-radius: var(--radius);
   overflow: hidden;
-  background: linear-gradient(
-    170deg,
-    var(--willow-green) 0%,
-    color-mix(in srgb, var(--willow-green) 60%, var(--bean)) 55%,
-    var(--bean) 100%
-  );
-  display: grid;
-  place-content: center;
-  color: var(--cream);
-  text-align: center;
-  padding: var(--space-m);
+  background: var(--bean);
 }
 
-.origin__media p {
-  font-size: var(--step--1);
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  opacity: 0.75;
+.origin__canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* A soft inner edge so the scene sits in the page rather than on it. */
+.origin__media::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--cream) 14%, transparent);
+  border-radius: inherit;
+}
+
+@media (min-width: 60rem) {
+  .origin {
+    /* Scroll room for the scrub. Act-local progress is measured from the real
+       section box (D9), so lengthening it here needs no constant updated. */
+    min-height: 220vh;
+  }
+
+  .origin__media {
+    position: sticky;
+    inset-block-start: 12vh;
+    height: 76vh;
+    aspect-ratio: auto;
+  }
+}
+
+/* No scrub, no sticky travel: the act collapses to a plain panel (§10). */
+@media (prefers-reduced-motion: reduce) {
+  .origin {
+    min-height: 0;
+  }
+
+  .origin__media {
+    position: static;
+    height: auto;
+    aspect-ratio: 4 / 5;
+  }
 }
 
 /* ============================================================= journey == */
@@ -869,10 +894,7 @@
   text-decoration: underline;
 }
 
-.footer__brand svg {
-  width: 3rem;
-  height: 3rem;
-}
+/* Sizing lives with the other logo rules, at the end of this file. */
 
 .footer__tagline {
   margin-block-start: var(--space-xs);
@@ -886,4 +908,30 @@
   border-block-start: 1px solid color-mix(in srgb, var(--cream) 15%, transparent);
   font-size: var(--step--1);
   color: color-mix(in srgb, var(--cream) 65%, transparent);
+}
+
+/* ============================================================ logo mark == */
+
+/*
+ * The real logo is a raster with a fixed 256×341 ratio. `object-fit: contain`
+ * plus a height-driven box means it can never be squashed by a flex or grid
+ * parent (§2, logo integrity) — the sizes below set height and let width follow.
+ */
+.nav__brand img,
+.footer__brand img,
+.preloader__mark {
+  width: auto;
+  object-fit: contain;
+}
+
+.nav__brand img {
+  height: 2.25rem;
+}
+
+.footer__brand img {
+  height: 3rem;
+}
+
+.preloader__mark {
+  height: clamp(84px, 12vw, 132px);
 }

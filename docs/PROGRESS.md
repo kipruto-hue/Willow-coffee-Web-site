@@ -79,3 +79,81 @@ Bloom/DOF/Vignette on the `high` tier only.
 **Launch checklist carried forward:** replace the placeholder WhatsApp number; confirm
 `info@willowscoffee.co.ke`; verify brand hexes against the master brand file; lock usage rights on the
 harvest footage.
+
+---
+
+## Session 02 — 2026-09-03 (same day, continued)
+
+**Erick supplied three things:** the brand's existing site (`p14fh7evs4g1-d.space-z.ai`) as a source of
+real assets, a reference frame for the highland look with the instruction to *use the principle, not the
+picture*, and "start Phase 2".
+
+### Real assets pulled from the existing Willow site
+
+- **The real logo** — `public/brand/willow-logo.png`, 256×341 RGBA. `LogoMark` now renders it instead of
+  the drawn placeholder. Its silhouette samples to exactly **#371101**, which **confirms the `--bean`
+  token** against a real brand asset. It is also now the favicon.
+  - Finding: the willow strokes in the artwork are **pure white**, not `--cream` (#F7F0DA) as §6
+    describes. The asset ships exactly as supplied — §2 forbids recolouring the logo — and the
+    discrepancy is on the launch checklist for the brand to settle.
+  - It is a raster. Fine at nav/footer size, will soften large or in 3D. An SVG is on the checklist.
+- **The real meta copy** — description, Open Graph description and keywords are now the brand's own
+  strings rather than the placeholder written in Phase 0. §11 asked for exactly this and the strings had
+  never been supplied; they were on the existing site all along. That placeholder is gone.
+- Note: the existing site references **no other image assets** — no packaging renders, no photography.
+  The pouch/cup/tin-tie renders are still missing (see `docs/ASSETS.md`).
+
+### Phase 2 — Origin scrub. COMPLETE.
+
+`src/origin/` — the scrubbed harvest visual, wired to act-local scroll progress.
+
+- **`frameSource.ts`** — two implementations behind one interface, so the real footage can land without
+  touching the component or the scroll wiring:
+  - `ImageSequenceSource` — the §7 primary path. Keyframes fetched up front, a preload window around the
+    playhead, **at most 6 decodes in flight**, and never a decode started from inside the draw call. If
+    the wanted frame is not ready it draws the nearest one that is, which reads as a held frame rather
+    than a stutter. This was flagged in the plan as the likeliest jank source; it is budgeted as its own
+    problem, not left to chance.
+  - `ProceduralSource` — what ships today.
+  - `HARVEST_MANIFEST` is `null`. Set it, drop frames in `public/harvest/`, and the real path takes over.
+- **`harvestScene.ts`** — the procedural scene. The camera travels down a row of coffee: branches sweep
+  in from the sides, leaves and cherries ride the stems, fruit passes through a focus band, one warm key
+  light travels across, dust glints only where the light is, near-black foliage frames the edges. Colour
+  runs from `--willow-green` highland light to deep amber for the handover to Act 3, and a restrained
+  flare masks the swap (§5.4).
+  - **Deterministic by construction**: every position is a pure function of `progress`. Scrub backwards
+    and the frame is identical. An animation that merely drifts near the scroll position looks fine going
+    down and smears going up.
+  - Art direction from Erick's reference — dark ground, one hot low key, heavy bokeh, particles in the
+    light. **Nothing reproduces that image.**
+- **`OriginSequence.tsx`** — the scroll callback records the target and returns; a single rAF, scheduled
+  at most once per frame, does the drawing. Paused off-screen and on a hidden tab (§9), DPR capped at
+  2 (1.5 on mid), element counts scale by tier, and reduced motion / low tier get **one still frame** and
+  no subscription at all (§10).
+- Layout: on desktop the Origin act is 220vh and the panel sticks, giving the scrub real scroll distance.
+  On narrow screens and under reduced motion it collapses to a plain inline panel.
+
+### Verified by looking, not just by testing
+
+`npm run render:harvest` drives the **real** `drawHarvestFrame` through `@napi-rs/canvas` (dev-only) and
+writes frames plus a contact sheet to `.render/`. That caught what the tests could not: the first pass was
+generic bokeh with no structure and a flare that whited out the last frame; the second read as pale olive
+leaves. Both were fixed by looking at the artefact. A passing test proves the code runs, not that the
+frame is any good.
+
+**26 tests green** (8 new). The new ones render through the same code path the browser uses and assert
+determinism — same progress, byte-identical PNG — that progress actually changes the frame, that
+out-of-range values clamp, that every pixel is opaque, and that the fallback is still the active source.
+
+**Build green**, 123KB gzipped total, still well under the ~400KB budget.
+
+### Not done, and deliberately so
+
+**Phase 1 — the hero WebGL scene — has not been built.** Erick asked for Phase 2 and Phase 2 does not
+depend on it: §7 allows the sequence to be drawn to a plain canvas, so no `<Canvas>`, no three.js, and no
+R3F are in the tree yet. The hero is still the Phase 0 CSS gradient. Phase 1 remains outstanding and is
+the natural next step.
+
+**Still not verified in a real browser.** The Chrome extension is not connected — Erick, run `/chrome` to
+finish that, then I can drive it. The scene has been verified frame-by-frame as rendered PNGs, which is
+strictly better than nothing but is not the same as watching it scrub under Lenis.
