@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#FAAF40" />
+
+    <title>willow coffee — warm coffee, grown with nature</title>
+    <meta
+      name="description"
+      content="Specialty single-origin arabica from Kenya's North Rift. Hand-picked at 2,100m in Nandi Hills and Kitale, small-batch roasted, packaged for retail, wholesale and export."
+    />
+    <meta
+      name="keywords"
+      content="Kenyan coffee, North Rift coffee, specialty arabica, Nandi Hills coffee, single origin, wholesale coffee Kenya"
+    />
+    <link rel="canonical" href="https://willowscoffee.co.ke/" />
+
+    <!-- Open Graph / Twitter (master prompt §11). og:image is pending a real
+         brand asset — see docs/ASSETS.md; a missing card beats a wrong one. -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="willow coffee" />
+    <meta property="og:title" content="willow coffee — warm coffee, grown with nature" />
+    <meta
+      property="og:description"
+      content="Specialty single-origin arabica from Kenya's North Rift. Hand-picked at 2,100m, small-batch roasted, packaged for retail, wholesale and export."
+    />
+    <meta property="og:url" content="https://willowscoffee.co.ke/" />
+    <meta property="og:locale" content="en_KE" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="willow coffee — warm coffee, grown with nature" />
+    <meta
+      name="twitter:description"
+      content="Specialty single-origin arabica from Kenya's North Rift. Hand-picked at 2,100m, small-batch roasted, packaged for retail, wholesale and export."
+    />
+
+    <!-- Self-hosted fonts: preload the two faces the first screen actually uses,
+         so the display headline is not the last thing to arrive. -->
+    <link
+      rel="preload"
+      href="/fonts/fredoka-latin-var.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <link
+      rel="preload"
+      href="/fonts/inter-latin-var.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+
+    <!-- The marigold ground is painted by the document itself, so the branded
+         preloader has no white flash to cover (§5.3, "graceful load"). -->
+    <style>
+      html {
+        background: #faaf40;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <noscript>
+      <p style="padding: 2rem; font-family: system-ui">
+        willow coffee — warm coffee, grown with nature. This site needs JavaScript for its
+        scroll experience. Reach us at info@willowscoffee.co.ke or on WhatsApp.
+      </p>
+    </noscript>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

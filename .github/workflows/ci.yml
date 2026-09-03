@@ -1,0 +1,30 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # Build plan D7: the phase gate is enforced by a machine, not by memory.
+      # Master prompt §13 — "do not leave the tree broken between phases".
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Test (copy fidelity + render smoke)
+        run: npm test
+
+      - name: Build
+        run: npm run build

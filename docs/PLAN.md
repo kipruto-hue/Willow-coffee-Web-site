@@ -1,7 +1,7 @@
 # BUILD PLAN — Willow Coffee Immersive Scroll Site
 
 Derived from `docs/MASTER_PROMPT.md` (the source of truth). Written 2026-09-03, before any code.
-Status of this document: **awaiting Erick's approval.** Nothing in `src/` gets written until it is approved.
+Status of this document: **approved by Erick, 2026-09-03.** Phase 0 is built; see `PROGRESS.md`.
 
 ---
 
@@ -30,6 +30,8 @@ be overruled.
 | D5 | **Contact form posts to a static-host form endpoint** (Netlify Forms or Formspree), with a `mailto:` fallback baked into the markup. | There is no backend in the stack and none is warranted. Needs Erick's pick — see §6 Open Questions. |
 | D6 | **Fonts self-hosted from the Google Fonts OFL originals** (Fredoka + Inter), subset to latin, WOFF2, `font-display: swap`, preloaded. | §3 and §6 require self-hosting; OFL permits it. Subsetting keeps the display face under budget. |
 | D7 | **CI: GitHub Actions running typecheck + build + the copy-fidelity test on every push.** | Phase gate in §13 says "at the end of each phase the site must build". A machine should enforce that, not memory. |
+| D8 | **Typography is normalised, wording is not.** The site typesets curly apostrophes and quotes; the fidelity test normalises curly↔straight and collapses whitespace before comparing. | The brief is plain text and its straight quotes are an artefact of that, not a design instruction. Normalising the *shape* while asserting every word means the test catches real drift instead of failing on a typographic improvement. Punctuation *presence* is still asserted. |
+| D9 | **Act scroll ranges are measured from the sections' real positions (a ScrollTrigger per section), not hardcoded global fractions.** | §5.2 gives "Hero 0.0 to 0.2, Origin 0.2 to 0.45" as an example. Section heights change with copy and breakpoints; a hardcoded range silently desynchronises from the content when they do, and the failure is a scene that leads or lags the words by half a screen. The ranges still exist — they are just derived. |
 
 ---
 

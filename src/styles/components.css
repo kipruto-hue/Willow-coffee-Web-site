@@ -1,0 +1,889 @@
+/*
+ * Component styles for the DOM content layer.
+ *
+ * Master prompt §4 lists tokens.css and globals.css; this third file exists so
+ * component rules do not swamp the base sheet. Tokens still live in exactly one
+ * place — nothing here invents a colour or a size.
+ */
+
+/* ============================================================== preloader == */
+
+.preloader {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-preloader);
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: var(--space-m);
+  background: var(--marigold);
+  transition: opacity var(--dur-slow) var(--ease-out-expo),
+    visibility var(--dur-slow) var(--ease-out-expo);
+}
+
+.preloader[data-done='true'] {
+  opacity: 0;
+  visibility: hidden;
+}
+
+.preloader__mark {
+  width: clamp(84px, 12vw, 132px);
+  height: auto;
+}
+
+.preloader__bar {
+  width: min(220px, 50vw);
+  height: 3px;
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--bean) 18%, transparent);
+  overflow: hidden;
+}
+
+.preloader__fill {
+  display: block;
+  height: 100%;
+  width: 0;
+  background: var(--cream);
+  border-radius: inherit;
+  transition: width var(--dur) var(--ease-out-expo);
+}
+
+.preloader__label {
+  font-size: var(--step--1);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--bean-soft);
+}
+
+/* ==================================================================== nav == */
+
+.nav {
+  position: fixed;
+  inset-block-start: 0;
+  inset-inline: 0;
+  z-index: var(--z-nav);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-m);
+  padding: var(--space-s) clamp(1.25rem, 4vw, 2.5rem);
+  transition: background var(--dur) var(--ease-out-expo),
+    box-shadow var(--dur) var(--ease-out-expo);
+}
+
+.nav[data-scrolled='true'] {
+  background: color-mix(in srgb, var(--cream) 88%, transparent);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 1px 0 var(--rule);
+}
+
+.nav__brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  text-decoration: none;
+  font-family: var(--font-display);
+  font-size: var(--step-1);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--bean);
+}
+
+.nav__brand svg {
+  width: 2.25rem;
+  height: 2.25rem;
+  flex: none;
+}
+
+.nav__nav {
+  display: flex;
+  align-items: center;
+}
+
+/* Hamburger: a real button with aria-expanded, not a checkbox hack (§10). */
+.nav__toggle {
+  display: inline-grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  padding: 0;
+  border: 1.5px solid var(--rule-strong);
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--cream) 55%, transparent);
+  cursor: pointer;
+}
+
+.nav__bars {
+  position: relative;
+}
+
+.nav__bars,
+.nav__bars::before,
+.nav__bars::after {
+  display: block;
+  width: 1.1rem;
+  height: 2px;
+  background: var(--bean);
+  border-radius: 2px;
+  transition: transform var(--dur-fast) var(--ease-out-expo),
+    opacity var(--dur-fast) var(--ease-out-expo);
+}
+
+.nav__bars::before,
+.nav__bars::after {
+  content: '';
+  position: absolute;
+}
+
+.nav__bars::before {
+  transform: translateY(-6px);
+}
+
+.nav__bars::after {
+  transform: translateY(6px);
+}
+
+.nav[data-open='true'] .nav__bars {
+  background: transparent;
+}
+
+.nav[data-open='true'] .nav__bars::before {
+  transform: rotate(45deg);
+}
+
+.nav[data-open='true'] .nav__bars::after {
+  transform: rotate(-45deg);
+}
+
+.nav__links {
+  display: none;
+  gap: var(--space-m);
+  list-style: none;
+  padding: 0;
+}
+
+.nav__links[data-open='true'] {
+  display: grid;
+  position: absolute;
+  inset-block-start: 100%;
+  inset-inline: clamp(1.25rem, 4vw, 2.5rem);
+  gap: var(--space-xs);
+  padding: var(--space-s) var(--space-m);
+  border-radius: var(--radius);
+  background: var(--cream);
+  box-shadow: 0 18px 40px color-mix(in srgb, var(--bean) 22%, transparent);
+}
+
+/* The order CTA never collapses into the menu — §2 keeps it one tap away. */
+.nav__cta {
+  padding-inline: 1rem;
+}
+
+.nav__links a {
+  text-decoration: none;
+  font-size: var(--step--1);
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: var(--bean);
+  padding-block: 0.25rem;
+  border-block-end: 2px solid transparent;
+  transition: border-color var(--dur-fast) var(--ease-out-expo);
+}
+
+.nav__links a:hover,
+.nav__links a[aria-current='true'] {
+  border-block-end-color: var(--amber-deep);
+}
+
+@media (min-width: 56rem) {
+  .nav__toggle {
+    display: none;
+  }
+
+  .nav__links,
+  .nav__links[data-open='true'] {
+    display: flex;
+    position: static;
+    padding: 0;
+    background: none;
+    box-shadow: none;
+    gap: var(--space-m);
+  }
+}
+
+/* ============================================================== buttons == */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.8rem 1.35rem;
+  border: 2px solid transparent;
+  border-radius: var(--radius-pill);
+  font-family: var(--font-body);
+  font-size: var(--step--1);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  text-decoration: none;
+  cursor: pointer;
+  transition: transform var(--dur-fast) var(--ease-out-expo),
+    background var(--dur-fast) var(--ease-out-expo),
+    color var(--dur-fast) var(--ease-out-expo);
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+}
+
+.btn--primary {
+  background: var(--bean);
+  color: var(--cream);
+}
+
+.btn--primary:hover {
+  background: var(--bean-soft);
+}
+
+.btn--ghost {
+  background: transparent;
+  border-color: var(--bean);
+  color: var(--bean);
+}
+
+.btn--ghost:hover {
+  background: color-mix(in srgb, var(--bean) 8%, transparent);
+}
+
+.on-dark .btn--ghost {
+  border-color: var(--cream);
+  color: var(--cream);
+}
+
+.on-dark .btn--ghost:hover {
+  background: color-mix(in srgb, var(--cream) 12%, transparent);
+}
+
+.btn--whatsapp {
+  background: var(--bean);
+  color: var(--cream);
+}
+
+/* ========================================================== sticky CTA == */
+
+/*
+ * §2: the order CTA is visible or one tap away from ANY scroll position.
+ * It is a real anchor, always in the tab order, and never covers the footer's
+ * own CTA (it hides once the footer is on screen).
+ */
+.sticky-cta {
+  position: fixed;
+  inset-block-end: clamp(1rem, 3vw, 1.75rem);
+  inset-inline-end: clamp(1rem, 3vw, 1.75rem);
+  z-index: var(--z-cta);
+  box-shadow: 0 10px 30px color-mix(in srgb, var(--bean) 28%, transparent);
+  transition: opacity var(--dur) var(--ease-out-expo),
+    transform var(--dur) var(--ease-out-expo);
+}
+
+.sticky-cta[data-hidden='true'] {
+  opacity: 0;
+  transform: translateY(150%);
+  pointer-events: none;
+}
+
+/* ================================================================ hero == */
+
+.hero {
+  min-height: 100svh;
+  display: grid;
+  align-content: center;
+  padding-block: calc(var(--space-2xl) + 3rem) var(--space-2xl);
+  background: linear-gradient(
+    180deg,
+    var(--hero-top) 0%,
+    var(--hero-mid) 58%,
+    var(--hero-bottom) 100%
+  );
+  color: var(--bean);
+  overflow: hidden;
+}
+
+.hero__inner {
+  display: grid;
+  gap: var(--space-m);
+  max-width: 34ch;
+}
+
+.hero h1 {
+  font-size: var(--step-5);
+}
+
+.hero__sub {
+  max-width: 46ch;
+  font-size: var(--step-1);
+  line-height: 1.5;
+  color: color-mix(in srgb, var(--bean) 88%, transparent);
+}
+
+.hero__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+  margin-block-start: var(--space-xs);
+}
+
+/* ============================================================== origin == */
+
+.origin {
+  background: var(--cream);
+}
+
+.origin__grid {
+  display: grid;
+  gap: var(--space-l);
+}
+
+@media (min-width: 60rem) {
+  .origin__grid {
+    grid-template-columns: 1.05fr 1fr;
+    align-items: start;
+    gap: var(--space-xl);
+  }
+}
+
+.stat-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+  list-style: none;
+  padding: 0;
+  margin-block-start: var(--space-m);
+}
+
+.stat-chips li {
+  padding: 0.5rem 0.95rem;
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius-pill);
+  font-size: var(--step--1);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  background: color-mix(in srgb, var(--marigold) 22%, transparent);
+}
+
+/*
+ * Origin visual. Phase 2 replaces this with the scrubbed harvest sequence;
+ * until those frames exist it is the §7 still + parallax fallback, built from
+ * brand colour only — no stock photo stands in for the farm.
+ */
+.origin__media {
+  position: relative;
+  aspect-ratio: 4 / 5;
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: linear-gradient(
+    170deg,
+    var(--willow-green) 0%,
+    color-mix(in srgb, var(--willow-green) 60%, var(--bean)) 55%,
+    var(--bean) 100%
+  );
+  display: grid;
+  place-content: center;
+  color: var(--cream);
+  text-align: center;
+  padding: var(--space-m);
+}
+
+.origin__media p {
+  font-size: var(--step--1);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  opacity: 0.75;
+}
+
+/* ============================================================= journey == */
+
+.journey {
+  background: linear-gradient(
+    180deg,
+    var(--willow-green) 0%,
+    var(--amber-deep) 52%,
+    var(--maroon) 100%
+  );
+  color: var(--cream);
+}
+
+.journey__steps {
+  display: grid;
+  gap: var(--space-m);
+  margin-block-start: var(--space-xl);
+  counter-reset: step;
+}
+
+@media (min-width: 48rem) {
+  .journey__steps {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 72rem) {
+  .journey__steps {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.step {
+  padding: var(--space-m);
+  border: 1px solid color-mix(in srgb, var(--cream) 22%, transparent);
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--bean) 24%, transparent);
+}
+
+.step__number {
+  font-family: var(--font-display);
+  font-size: var(--step-3);
+  line-height: 1;
+  color: color-mix(in srgb, var(--cream) 55%, transparent);
+}
+
+.step__stage {
+  display: block;
+  margin-block-start: var(--space-2xs);
+  font-size: var(--step--1);
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--marigold);
+}
+
+.step h3 {
+  margin-block-start: var(--space-xs);
+  font-size: var(--step-1);
+}
+
+.step p {
+  margin-block-start: var(--space-xs);
+  font-size: var(--step--1);
+  line-height: 1.55;
+  color: color-mix(in srgb, var(--cream) 86%, transparent);
+}
+
+/* ============================================================= product == */
+
+.product {
+  background: linear-gradient(
+    180deg,
+    var(--maroon) 0%,
+    var(--amber-deep) 18%,
+    var(--marigold) 100%
+  );
+  color: var(--bean);
+}
+
+.product__grid {
+  display: grid;
+  gap: var(--space-m);
+  margin-block-start: var(--space-xl);
+}
+
+@media (min-width: 46rem) {
+  .product__grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-s);
+  padding: var(--space-m);
+  background: var(--cream);
+  border-radius: var(--radius);
+  box-shadow: 0 12px 30px color-mix(in srgb, var(--bean) 16%, transparent);
+}
+
+.card__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-s);
+}
+
+.card h3 {
+  font-size: var(--step-2);
+}
+
+.badge {
+  flex: none;
+  padding: 0.3rem 0.7rem;
+  border-radius: var(--radius-pill);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  background: var(--bean);
+  color: var(--cream);
+}
+
+.badge[data-kind='LIMITED'] {
+  background: var(--maroon);
+}
+
+.badge[data-kind='WHOLESALE'] {
+  background: var(--tan);
+  color: var(--bean);
+}
+
+.card__notes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  list-style: none;
+  padding: 0;
+}
+
+.card__notes li {
+  padding: 0.25rem 0.65rem;
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius-pill);
+  font-size: var(--step--1);
+}
+
+.card p {
+  font-size: var(--step--1);
+  line-height: 1.55;
+  color: var(--ink-soft);
+}
+
+.card__options {
+  display: grid;
+  gap: var(--space-s);
+  margin-block-start: auto;
+  padding-block-start: var(--space-s);
+  border-block-start: 1px solid var(--rule);
+}
+
+.option__label {
+  display: block;
+  margin-block-end: var(--space-2xs);
+  font-size: var(--step--1);
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+/* Real radio inputs, visually hidden — keyboard and screen readers get the
+   native control; sighted users get the chip (§10). */
+.chip input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.chip span {
+  display: inline-block;
+  padding: 0.4rem 0.8rem;
+  border: 1.5px solid var(--rule-strong);
+  border-radius: var(--radius-pill);
+  font-size: var(--step--1);
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-out-expo),
+    border-color var(--dur-fast) var(--ease-out-expo);
+}
+
+.chip input:checked + span {
+  background: var(--bean);
+  border-color: var(--bean);
+  color: var(--cream);
+}
+
+.chip input:focus-visible + span {
+  outline: 3px solid var(--bean);
+  outline-offset: 3px;
+}
+
+.card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+}
+
+.packaging {
+  display: grid;
+  gap: var(--space-m);
+  margin-block-start: var(--space-xl);
+}
+
+@media (min-width: 46rem) {
+  .packaging {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.packaging h3 {
+  font-size: var(--step-1);
+}
+
+.packaging p {
+  margin-block-start: var(--space-2xs);
+  font-size: var(--step--1);
+  color: color-mix(in srgb, var(--bean) 78%, transparent);
+}
+
+/* ============================================================= quality == */
+
+.quality {
+  background: var(--marigold);
+  color: var(--bean);
+}
+
+.credentials {
+  display: grid;
+  gap: var(--space-m);
+  margin-block-start: var(--space-xl);
+}
+
+@media (min-width: 46rem) {
+  .credentials {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.credential {
+  padding: var(--space-m);
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--cream) 60%, transparent);
+}
+
+.credential h3 {
+  font-size: var(--step-1);
+}
+
+.credential p {
+  margin-block-start: var(--space-xs);
+  font-size: var(--step--1);
+  color: var(--ink-soft);
+}
+
+.sdgs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-s);
+  list-style: none;
+  padding: 0;
+  margin-block-start: var(--space-l);
+}
+
+.sdgs li {
+  display: flex;
+  align-items: baseline;
+  gap: 0.45rem;
+  padding: 0.5rem 0.95rem;
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius-pill);
+  font-size: var(--step--1);
+}
+
+.sdgs b {
+  font-family: var(--font-display);
+  font-size: var(--step-0);
+}
+
+.dossier {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-xs);
+  margin-block-start: var(--space-l);
+}
+
+/* ======================================================== testimonials == */
+
+.testimonials {
+  background: var(--cream);
+}
+
+.testimonials__grid {
+  display: grid;
+  gap: var(--space-m);
+  margin-block-start: var(--space-l);
+}
+
+@media (min-width: 46rem) {
+  .testimonials__grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.testimonial {
+  padding: var(--space-m);
+  border-radius: var(--radius);
+  border: 1px solid var(--rule);
+  background: color-mix(in srgb, var(--marigold) 12%, transparent);
+}
+
+.testimonial blockquote {
+  margin: 0;
+  font-size: var(--step-0);
+  line-height: 1.55;
+}
+
+.testimonial figcaption {
+  margin-block-start: var(--space-s);
+  font-size: var(--step--1);
+  color: var(--ink-soft);
+}
+
+.testimonial figcaption b {
+  color: var(--ink);
+}
+
+/* ============================================================= contact == */
+
+.contact {
+  background: var(--bean);
+  color: var(--cream);
+}
+
+.contact__grid {
+  display: grid;
+  gap: var(--space-l);
+  margin-block-start: var(--space-l);
+}
+
+@media (min-width: 60rem) {
+  .contact__grid {
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-xl);
+  }
+}
+
+.field {
+  display: grid;
+  gap: var(--space-2xs);
+  margin-block-end: var(--space-s);
+}
+
+.field label {
+  font-size: var(--step--1);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+}
+
+.field input,
+.field select,
+.field textarea {
+  padding: 0.7rem 0.85rem;
+  border: 1.5px solid color-mix(in srgb, var(--cream) 35%, transparent);
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--cream) 8%, transparent);
+  color: var(--cream);
+}
+
+.field textarea {
+  min-height: 8rem;
+  resize: vertical;
+}
+
+.field select option {
+  color: var(--bean);
+}
+
+.contact__aside dl {
+  display: grid;
+  gap: var(--space-s);
+  margin: 0;
+}
+
+.contact__aside dt {
+  font-size: var(--step--1);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--cream) 65%, transparent);
+}
+
+.contact__aside dd {
+  margin: 0;
+  font-size: var(--step-0);
+}
+
+.contact__map {
+  margin-block-start: var(--space-m);
+  border: 0;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  border-radius: var(--radius);
+  filter: saturate(0.85);
+}
+
+/* ============================================================== footer == */
+
+.footer {
+  background: var(--bean);
+  color: var(--cream);
+  padding-block: var(--space-xl) var(--space-l);
+  border-block-start: 1px solid color-mix(in srgb, var(--cream) 15%, transparent);
+}
+
+.footer__grid {
+  display: grid;
+  gap: var(--space-l);
+}
+
+@media (min-width: 46rem) {
+  .footer__grid {
+    grid-template-columns: 1.4fr 1fr 1fr 1.2fr;
+  }
+}
+
+.footer h2 {
+  font-size: var(--step--1);
+  font-family: var(--font-body);
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--cream) 65%, transparent);
+  margin-block-end: var(--space-s);
+}
+
+.footer ul {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  gap: var(--space-2xs);
+  font-size: var(--step--1);
+}
+
+.footer a {
+  text-decoration: none;
+}
+
+.footer a:hover {
+  text-decoration: underline;
+}
+
+.footer__brand svg {
+  width: 3rem;
+  height: 3rem;
+}
+
+.footer__tagline {
+  margin-block-start: var(--space-xs);
+  font-size: var(--step--1);
+  color: color-mix(in srgb, var(--cream) 78%, transparent);
+}
+
+.footer__legal {
+  margin-block-start: var(--space-xl);
+  padding-block-start: var(--space-s);
+  border-block-start: 1px solid color-mix(in srgb, var(--cream) 15%, transparent);
+  font-size: var(--step--1);
+  color: color-mix(in srgb, var(--cream) 65%, transparent);
+}
