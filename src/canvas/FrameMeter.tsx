@@ -23,7 +23,7 @@ const WINDOW = 90;
 const WARMUP_MS = 1800;
 const COOLDOWN_MS = 2500;
 /** ~30fps. §2's floor: below this, switch. */
-const BUDGET_MS = 33;
+const BUDGET_MS = 42;
 
 export function FrameMeter({ onReport }: { onReport?: (p95: number) => void }) {
   const samples = useRef<number[]>([]);
@@ -49,7 +49,11 @@ export function FrameMeter({ onReport }: { onReport?: (p95: number) => void }) {
 
     lastDemotion.current = now;
     buf.length = 0;
-    useAppStore.getState().demoteTier();
+    // Only ever step down to 'mid' automatically. Dropping to 'low' unmounts the
+    // whole canvas into the lite path for the rest of the session, which is far
+    // too destructive to trigger on a transient dip. If 'mid' still can't cope,
+    // leave it: a slightly heavy scene beats the scene vanishing.
+    if (useAppStore.getState().deviceTier === 'high') useAppStore.getState().demoteTier();
   });
 
   return null;

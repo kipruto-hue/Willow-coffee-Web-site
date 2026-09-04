@@ -991,3 +991,24 @@
 :root[data-webgl='true'] .hero__inner {
   position: relative;
 }
+
+
+/* ---------------------------------------------------------- packaging shot --
+ * The brand's packaging photograph, in the Product act. Full-bleed within the
+ * shell, and never taller than two-thirds of the viewport so it cannot push the
+ * order CTAs off screen on a laptop.
+ */
+.packaging__shot {
+  margin: var(--space-xl) 0 var(--space-l);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: color-mix(in srgb, var(--bean) 8%, transparent);
+}
+
+.packaging__shot img {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-block-size: 66vh;
+  object-fit: cover;
+}

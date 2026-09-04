@@ -116,6 +116,24 @@ export function Products() {
           ))}
         </div>
 
+        {/*
+          * The brand's own packaging photograph. Until this landed the entire
+          * site carried one image — the nav logo — which is why it read as
+          * cheap regardless of what the canvas was doing behind it. It sits in
+          * the DOM rather than the canvas on purpose: the lite path, phones and
+          * reduced-motion visitors all get it, and they are the majority.
+          */}
+        <figure className="packaging__shot">
+          <img
+            src="/brand/packaging-amber.jpg"
+            width={1600}
+            height={945}
+            loading="lazy"
+            decoding="async"
+            alt="willow coffee 500g premium pouch and matching cup, in the brand's amber gradient with the white willow-branch pattern"
+          />
+        </figure>
+
         <div className="packaging">
           {packagingBlurbs.map((blurb) => (
             <div key={blurb.title}>

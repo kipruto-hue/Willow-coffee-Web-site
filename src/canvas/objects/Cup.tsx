@@ -1,6 +1,7 @@
-import { useRef } from 'react';
+import { Suspense, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
-import type { Group } from 'three';
+import { useTexture } from '@react-three/drei';
+import { SRGBColorSpace, type Group } from 'three';
 import { brandColors } from '../palette';
 import { readAppState } from '../../store/useAppStore';
 import type { ActId } from '../../content/types';
@@ -14,14 +15,24 @@ import type { ActId } from '../../content/types';
  * only. When the render arrives it becomes a `map` on this same material and
  * nothing else changes.
  */
+/** Unrolled cup wrap art, mapped around the body once it exists (§7). */
+function CupSkin({ path }: { path: string }) {
+  const map = useTexture(path);
+  map.colorSpace = SRGBColorSpace;
+  return <meshStandardMaterial map={map} roughness={0.5} metalness={0.02} />;
+}
+
 export function Cup({
   act,
   position = [0, 0, 0],
   scale = 1,
+  wrap,
 }: {
   act: ActId;
   position?: [number, number, number];
   scale?: number;
+  /** e.g. '/brand/cup-wrap.png'. Dormant until supplied. */
+  wrap?: string;
 }) {
   const group = useRef<Group>(null);
   const c = brandColors();
@@ -44,8 +55,16 @@ export function Cup({
     <group ref={group} position={position} scale={scale}>
       {/* body, slightly tapered */}
       <mesh castShadow={false}>
-        <cylinderGeometry args={[0.52, 0.4, 1.15, 40, 1, true]} />
-        <meshStandardMaterial color={c.marigold} roughness={0.55} metalness={0.02} />
+        <cylinderGeometry args={[0.52, 0.4, 1.15, 64, 1, true]} />
+        {wrap ? (
+          <Suspense
+            fallback={<meshStandardMaterial color={c.marigold} roughness={0.55} metalness={0.02} />}
+          >
+            <CupSkin path={wrap} />
+          </Suspense>
+        ) : (
+          <meshStandardMaterial color={c.marigold} roughness={0.55} metalness={0.02} />
+        )}
       </mesh>
 
       {/* the brand band */}

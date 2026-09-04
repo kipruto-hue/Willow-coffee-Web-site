@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "Willow Coffee \u2014 immersive scroll site for a North Rift, Kenya single-origin coffee brand",
+  "description": "Willow Coffee — immersive scroll site for a North Rift, Kenya single-origin coffee brand",
   "license": "MIT",
   "scripts": {
     "dev": "vite",
@@ -13,7 +13,8 @@
     "test": "vitest run",
     "render:harvest": "vite-node scripts/render-harvest-frames.ts",
     "prerender": "vite-node scripts/prerender.ts",
-    "check:bundle": "vite-node scripts/check-bundle.ts"
+    "check:bundle": "vite-node scripts/check-bundle.ts",
+    "build:brand": "vite-node scripts/build-brand-art.ts"
   },
   "dependencies": {
     "@react-three/drei": "^10.7.8",
@@ -28,6 +29,7 @@
   },
   "devDependencies": {
     "@napi-rs/canvas": "^1.0.8",
+    "@types/node": "^22.20.1",
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
     "@vitejs/plugin-react": "^5.0.4",

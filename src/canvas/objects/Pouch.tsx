@@ -1,6 +1,7 @@
-import { useRef } from 'react';
+import { Suspense, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { MathUtils, type Group } from 'three';
+import { useTexture } from '@react-three/drei';
+import { MathUtils, SRGBColorSpace, type Group } from 'three';
 import { brandColors } from '../palette';
 import { readAppState } from '../../store/useAppStore';
 import type { ActId } from '../../content/types';
@@ -18,14 +19,24 @@ import type { ActId } from '../../content/types';
  * this act is where people decide to buy, so the motion stops being interesting
  * and gets out of the way of the CTAs.
  */
+/** Front-panel packaging artwork, mapped onto the panel once it exists (§7). */
+function PouchArt({ path }: { path: string }) {
+  const map = useTexture(path);
+  map.colorSpace = SRGBColorSpace;
+  return <meshStandardMaterial map={map} roughness={0.75} />;
+}
+
 export function Pouch({
   act,
   position = [0, 0, 0],
   scale = 1,
+  art,
 }: {
   act: ActId;
   position?: [number, number, number];
   scale?: number;
+  /** e.g. '/brand/pouch-front.png'. Dormant until supplied. */
+  art?: string;
 }) {
   const group = useRef<Group>(null);
   const c = brandColors();
@@ -56,7 +67,13 @@ export function Pouch({
       {/* front panel — where the packaging artwork will be mapped */}
       <mesh position={[0, -0.05, 0.172]}>
         <planeGeometry args={[0.8, 1.05]} />
-        <meshStandardMaterial color={c.bean} roughness={0.75} />
+        {art ? (
+          <Suspense fallback={<meshStandardMaterial color={c.bean} roughness={0.75} />}>
+            <PouchArt path={art} />
+          </Suspense>
+        ) : (
+          <meshStandardMaterial color={c.bean} roughness={0.75} />
+        )}
       </mesh>
 
       {/* top seal */}

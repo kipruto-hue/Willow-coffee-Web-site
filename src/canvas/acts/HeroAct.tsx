@@ -23,7 +23,7 @@ export function HeroAct() {
   return (
     <group>
       <Beans act="hero" count={BEAN_COUNT[tier]} radius={3.4} travel={7.5} />
-      <Cup act="hero" position={[1.55, -0.35, -1.6]} scale={1.15} />
+      <Cup act="hero" position={[1.55, -0.35, -1.6]} scale={1.15} wrap="/brand/cup-wrap.png" />
       <LogoBean act="hero" position={[1.5, 0.95, -2.4]} height={0.8} />
     </group>
   );

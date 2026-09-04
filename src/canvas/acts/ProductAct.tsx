@@ -21,8 +21,8 @@ export function ProductAct() {
 
   return (
     <group>
-      <Pouch act="product" position={[2.1, 0.1, -3.2]} scale={1.25} />
-      <Cup act="product" position={[3.2, -0.7, -3.6]} scale={0.85} />
+      <Pouch act="product" position={[2.1, 0.1, -3.2]} scale={1.25} art="/brand/pouch-front.png" />
+      <Cup act="product" position={[3.2, -0.7, -3.6]} scale={0.85} wrap="/brand/cup-wrap.png" />
       <Beans
         act="product"
         count={BEAN_COUNT[tier]}

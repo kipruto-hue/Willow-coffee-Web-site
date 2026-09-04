@@ -10,8 +10,10 @@ the human".
       exactly one place: `brand.whatsappNumber` in `src/content/site.ts`. Every CTA on the
       site reads from there.
 - [ ] **Confirm `info@willowscoffee.co.ke`** is the live inbox, and that someone reads it.
-- [ ] **Verify the brand hexes** in `src/styles/tokens.css` against the master brand file.
-      They were sampled from the supplied PDF and renders, not taken from a spec.
+- [x] **Verify the brand hexes** in `src/styles/tokens.css`. Done by sampling the supplied
+      packaging photograph (`assets-src/exhibit-amber.png`) down the bag's short axis. Every
+      amber token landed within a couple of levels of its photographed pixel — see
+      `docs/ASSETS.md`. Not changed as a result: they were already right.
 - [ ] **Supply a vector logo.** The real mark is in the tree (`public/brand/willow-logo.png`)
       but as a 256×341 raster. Get an SVG before it is used large or in 3D, and re-check the
       §2 logo rules against every act and every device tier.
