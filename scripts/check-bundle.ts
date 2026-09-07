@@ -23,11 +23,23 @@ const js = files.filter((f) => f.endsWith('.js'));
 const threeChunks = js.filter((f) => f.startsWith('three-'));
 const entryChunks = js.filter((f) => !f.startsWith('three-'));
 
+/**
+ * No 3D chunk at all is now the EXPECTED state, not a failure.
+ *
+ * The background is real footage (src/media/, docs/VIDEO.md); nothing imports
+ * src/canvas/ any more, so Rollup never emits a three chunk. This check used to
+ * throw here, on the reasoning that a missing chunk meant the split had
+ * collapsed into the entry — so the guard has to distinguish "gone" from
+ * "merged in". The checks below do that directly: if 3D code had been folded
+ * into the entry path, `WebGLRenderer` would be sitting in an entry chunk, and
+ * that is still an error whether or not a three-*.js file exists.
+ *
+ * The files under src/canvas/ are still in the tree, unimported. If they are
+ * ever wired back up, the chunk reappears and every assertion below applies to
+ * it again unchanged.
+ */
 if (threeChunks.length === 0) {
-  throw new Error(
-    'check-bundle: no three-*.js chunk found. Either the 3D code is gone, or it ' +
-      'has been merged into the entry bundle — check vite.config.ts manualChunks.',
-  );
+  console.log('  (no 3D chunk — the background is video; src/canvas/ is unimported)');
 }
 
 // A WebGL renderer in the entry path means the split has collapsed.
@@ -110,9 +122,11 @@ for (const file of initial) {
   const size = gzipSync(readFileSync(join(ASSETS, file))).length / 1024;
   console.log(`  ${file.padEnd(30)} ${size.toFixed(1)}KB gz`);
 }
-const threeKb =
-  threeChunks.reduce((t, f) => t + gzipSync(readFileSync(join(ASSETS, f))).length, 0) / 1024;
-console.log(`  (3D chunk, lazy)               ${threeKb.toFixed(1)}KB gz`);
+if (threeChunks.length > 0) {
+  const threeKb =
+    threeChunks.reduce((t, f) => t + gzipSync(readFileSync(join(ASSETS, f))).length, 0) / 1024;
+  console.log(`  (3D chunk, lazy)               ${threeKb.toFixed(1)}KB gz`);
+}
 console.log(`\ninitial payload: ${kb.toFixed(1)}KB gz / ${BUDGET_KB}KB budget`);
 
 if (kb > BUDGET_KB) {

@@ -1,7 +1,7 @@
 import { useRef } from 'react';
 import { origin } from '../content/site';
 import { useActProgress } from '../scroll/useScrollProgress';
-import { OriginSequence } from '../origin/OriginSequence';
+import { OriginClip } from '../media/OriginClip';
 
 /**
  * Act 2 — Origin (master prompt §8).
@@ -41,7 +41,7 @@ export function OriginCopy() {
           would be inventing brand copy.
         */}
         <div className="origin__media" aria-hidden="true">
-          <OriginSequence />
+          <OriginClip />
         </div>
       </div>
     </section>

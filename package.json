@@ -14,6 +14,7 @@
     "render:harvest": "vite-node scripts/render-harvest-frames.ts",
     "prerender": "vite-node scripts/prerender.ts",
     "check:bundle": "vite-node scripts/check-bundle.ts",
+    "check:contrast": "vite-node scripts/check-stage-contrast.ts",
     "build:brand": "vite-node scripts/build-brand-art.ts"
   },
   "dependencies": {

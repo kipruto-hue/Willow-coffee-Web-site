@@ -398,3 +398,67 @@ outside.
   The old 62.8KB was fiction — React was hidden inside the 3D chunk, uncounted and downloaded anyway.
   A lite visitor goes from ~398KB gz to 127KB gz.
 - 47 tests green, typecheck clean, build green.
+
+---
+
+## Session 07 — 2026-09-07 — the background is real footage now
+
+Erick supplied three vertical (9:16) clips — beans in a grinder, smoke over roasted beans, a pour into a
+cup — with their poster stills and a prepared patch, and the instruction that the generated motion "reads
+as AI and has to go", plus one requirement of his own: **the movement must only happen when there is
+movement in the site.**
+
+The patch was reviewed and applied as given: `src/media/videoManifest.ts`, `VideoStage.tsx`,
+`OriginClip.tsx`, `src/styles/media.css`, and the `App.tsx` / `OriginCopy.tsx` swaps. `src/canvas/` and
+`src/origin/` are still in the tree, simply not imported (see `docs/VIDEO.md` for the uninstall when video
+is confirmed). Posters are in `public/media/`.
+
+### Three things the patch did not cover
+
+**1. The clips would have run forever.** The layers were `autoPlay loop`, which is the same restless feel
+in a different costume. `useScrollActivity` subscribes to `globalProgress` through zustand's non-reactive
+`subscribe` — so a scroll re-renders nothing, and React state changes exactly twice per scroll burst, at
+its start and after ~420ms of stillness. `useClipPlayback` then plays and pauses by ref; the elements
+carry no `autoPlay` at all. A layer moves only while it is the act on screen AND the page is moving, and
+the film grain parks with it (`#video-stage[data-moving='false']`). Hidden tab forces it false.
+
+**2. `check-bundle` would have failed the build for the right reason.** It threw when no `three-*` chunk
+existed, on the reasoning that a missing chunk meant the split had collapsed into the entry. With the
+canvas unimported that is now the expected state, so absence is the pass case — and the checks that
+actually distinguish "gone" from "merged in" (no `WebGLRenderer` in an entry chunk, no static import, no
+mention in `index.html`) are unchanged and still apply if the canvas is ever wired back up.
+
+**3. The copy was about to sit on photographs at 1.60:1.** `[data-webgl='true']` makes the hero, journey,
+product and quality acts transparent — and it now applies on *every* path, so phones and reduced-motion
+visitors, who used to get an opaque gradient and never met the stage, get footage too. `contrast.test.ts`
+checks colour *pairings* and cannot see this. `scripts/check-stage-contrast.ts` samples the posters where
+the copy actually falls, taking the **worst cell rather than the mean** — one specular highlight under one
+word is a real failure an average erases:
+
+```
+cream on bare hero footage     2.61:1
+cream on bare product footage  1.60:1   <- the pour's near-white cup and smoke
+```
+
+against AA's 4.5:1. The supplied `#video-stage::after` was a vignette — `transparent 42% -> bean 62%` —
+which protects the corners and leaves the middle of the frame, where the product cards sit, completely
+bare. It is now a **floor**: 55% `--bean` at centre rising to 82% at the edges, measuring **6.82:1** and
+**5.18:1**. `npm run check:contrast` re-runs it; new footage is new luminance.
+
+### Also
+
+- `clipIsMotion(clip, reducedMotion, tier)` is the single home of the still-vs-motion rule, which was
+  duplicated in both components. Nine tests cover it and the act-inheritance fallback, including that
+  every poster a manifest entry names actually exists — a missing file is a blank stage and nothing else
+  in the build would say so.
+- `public/Image/` held the source zip and two PNGs. `public/` is served verbatim, so that would have
+  published 1.6MB of source material; moved to `assets-src/video-source/`.
+
+### Verified
+
+- **`npm run build` green, and there is no `three` chunk in the output.** 67 modules, 4.85s (was ~1000
+  modules and 36s). Initial payload **123.2KB gz** / 400KB.
+- 56 tests green (9 new), typecheck clean, bundle guard green.
+- Served on :5173 — page and all three posters 200, and the served HTML references no `three-` chunk.
+- **Still not seen in a browser.** The extension is not connected. Everything above is build output, HTTP
+  and measured pixels; nobody has watched a crossfade or confirmed the clips pause when scrolling stops.
