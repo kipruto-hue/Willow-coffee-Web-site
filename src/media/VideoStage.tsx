@@ -14,9 +14,8 @@ import '../styles/media.css';
  * does the crossfade. Layers are NOT remounted on scroll, so a playing video is
  * never restarted mid-fade.
  *
- * A vertical (9:16) source cannot fill a wide desktop, so each layer is a
- * blurred cover-fill behind a sharp contained frame. On a phone the frame is
- * cover-fit and the fill is hidden — the source matches the screen there.
+ * Vertical (9:16) sources are cover-fit and their edges feathered in CSS so the
+ * footage melts into the light page with no hard rectangle. See media.css.
  *
  * Nothing here plays on its own: a layer moves only while it is the act on
  * screen AND the visitor is scrolling (`useScrollActivity`). Footage that loops
@@ -34,7 +33,6 @@ function ClipLayer({ clip, active, moving }: { clip: Clip; active: boolean; movi
 
   return (
     <div className="clip" data-active={active ? 'true' : 'false'} aria-hidden="true">
-      <div className="clip__fill" style={{ backgroundImage: `url(${clip.poster})` }} />
       {useVideo ? (
         <video
           ref={video}

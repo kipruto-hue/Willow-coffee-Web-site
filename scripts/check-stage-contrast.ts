@@ -5,27 +5,35 @@
  *
  * `contrast.test.ts` checks the brand's colour PAIRINGS. It cannot see this:
  * with the video stage mounted, `:root[data-webgl='true']` makes the hero,
- * journey, product and quality acts transparent, so their cream copy now sits
- * over a photograph instead of a gradient — and it does so on EVERY path now,
- * including phones and reduced motion, which used to get an opaque gradient and
- * never met the stage at all.
+ * journey, product and quality acts transparent, so their copy sits over a
+ * photograph instead of a gradient — and on EVERY path now, including phones
+ * and reduced motion, which used to get an opaque gradient and never met the
+ * stage at all.
  *
- * A photograph has no single colour, so this samples the poster where the text
- * actually falls, takes the WORST (brightest) cell rather than the average — a
- * mean hides a specular highlight sitting under one word — and applies the
- * scrim the stage paints over it before comparing.
+ * Two things this gets right that the first version did not:
  *
- * It reports; it does not throw. The scrim strength is a design decision and
- * this is the number to make it with.
+ *   1. **Each act's own text colour.** Measuring one colour everywhere is how
+ *      you end up "fixing" contrast in a direction that makes three acts worse
+ *      to help one. All four bands are now `--bean`, but that is a RESULT of
+ *      measuring, not an assumption: `.journey` was cream until this script
+ *      showed cream cannot be saved on a light floor at any strength.
+ *   2. **The stack as it is actually composited**: the light warm base, then the
+ *      footage feathered into it by the radial mask, then the top/bottom wash.
+ *      At the frame edges the mask is transparent and what shows is the BASE —
+ *      which is where light copy is at its worst, not over the photograph.
+ *
+ * The soft-light grade layer is not modelled; it nudges midtones and does not
+ * move a result across the 4.5 line on its own. Worst cell, never the mean: one
+ * specular highlight under one word is a real failure an average erases.
  */
 import { loadImage, createCanvas } from '@napi-rs/canvas';
 
-/** --bean, the scrim colour, from tokens.css. */
-const BEAN = { r: 0x37, g: 0x11, b: 0x01 };
-/** --cream, the body copy, from tokens.css. */
-const CREAM = { r: 0xf7, g: 0xf0, b: 0xda };
-
 type Rgb = { r: number; g: number; b: number };
+
+/* tokens.css */
+const BEAN: Rgb = { r: 0x37, g: 0x11, b: 0x01 };
+const CREAM: Rgb = { r: 0xf7, g: 0xf0, b: 0xda };
+const MARIGOLD: Rgb = { r: 0xfa, g: 0xaf, b: 0x40 };
 
 const channel = (v: number): number => {
   const c = v / 255;
@@ -33,97 +41,214 @@ const channel = (v: number): number => {
 };
 const luminance = ({ r, g, b }: Rgb): number =>
   0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b);
-const ratio = (a: Rgb, b: Rgb): number => {
+const contrast = (a: Rgb, b: Rgb): number => {
   const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x) as [number, number];
   return (hi + 0.05) / (lo + 0.05);
 };
-/** `over` composited onto `under` at the given alpha. */
-const over = (under: Rgb, layer: Rgb, alpha: number): Rgb => ({
-  r: layer.r * alpha + under.r * (1 - alpha),
-  g: layer.g * alpha + under.g * (1 - alpha),
-  b: layer.b * alpha + under.b * (1 - alpha),
+const mix = (a: Rgb, b: Rgb, t: number): Rgb => ({
+  r: a.r * (1 - t) + b.r * t,
+  g: a.g * (1 - t) + b.g * t,
+  b: a.b * (1 - t) + b.b * t,
 });
 
-/**
- * Regions of the frame the copy actually occupies, in fractions of the poster.
- * The hero sets its copy left of centre; the other acts run their cards over the
- * middle band.
- */
-const REGIONS: Record<string, { x: number; y: number; w: number; h: number }> = {
-  'hero — headline block (left)': { x: 0.04, y: 0.3, w: 0.55, h: 0.42 },
-  'product — card band (centre)': { x: 0.1, y: 0.25, w: 0.8, h: 0.5 },
-};
+/** #video-stage background: cream at the top to marigold-22%-on-cream at the bottom. */
+const stageBase = (yFraction: number): Rgb => mix(CREAM, mix(CREAM, MARIGOLD, 0.22), yFraction);
 
-/** The scrim `#video-stage::after` lays over the footage, as a flat alpha. */
-const SCRIM_ALPHA = Number(process.argv[2] ?? 0.62);
-
-const posters = ['hero', 'product'] as const;
-
-console.log(`scrim alpha under test: ${SCRIM_ALPHA}\n`);
-let worst = Infinity;
-
-for (const name of posters) {
-  const image = await loadImage(`public/media/${name}.jpg`);
-  const canvas = createCanvas(image.width, image.height);
-  const ctx = canvas.getContext('2d');
-  ctx.drawImage(image, 0, 0);
-
-  for (const [label, region] of Object.entries(REGIONS)) {
-    if (!label.startsWith(name)) continue;
-
-    const x0 = Math.floor(region.x * image.width);
-    const y0 = Math.floor(region.y * image.height);
-    const w = Math.floor(region.w * image.width);
-    const h = Math.floor(region.h * image.height);
-    const { data } = ctx.getImageData(x0, y0, w, h);
-
-    // Worst cell, not the mean: one bright highlight under one word is a real
-    // failure and an average erases it. 24x24 cells ~ a word-sized patch.
-    const CELLS = 24;
-    let brightest: Rgb = BEAN;
-    let brightestL = -1;
-
-    for (let cy = 0; cy < CELLS; cy += 1) {
-      for (let cx = 0; cx < CELLS; cx += 1) {
-        let r = 0;
-        let g = 0;
-        let b = 0;
-        let n = 0;
-        const sx0 = Math.floor((cx * w) / CELLS);
-        const sx1 = Math.floor(((cx + 1) * w) / CELLS);
-        const sy0 = Math.floor((cy * h) / CELLS);
-        const sy1 = Math.floor(((cy + 1) * h) / CELLS);
-        for (let y = sy0; y < sy1; y += 2) {
-          for (let x = sx0; x < sx1; x += 2) {
-            const i = (y * w + x) * 4;
-            r += data[i] ?? 0;
-            g += data[i + 1] ?? 0;
-            b += data[i + 2] ?? 0;
-            n += 1;
-          }
-        }
-        if (n === 0) continue;
-        const cell = { r: r / n, g: g / n, b: b / n };
-        const l = luminance(cell);
-        if (l > brightestL) {
-          brightestL = l;
-          brightest = cell;
-        }
-      }
-    }
-
-    const bare = ratio(CREAM, brightest);
-    const scrimmed = ratio(CREAM, over(brightest, BEAN, SCRIM_ALPHA));
-    worst = Math.min(worst, scrimmed);
-
-    console.log(`${label}`);
-    console.log(`  worst cell            rgb(${brightest.r.toFixed(0)}, ${brightest.g.toFixed(0)}, ${brightest.b.toFixed(0)})`);
-    console.log(`  cream on bare footage ${bare.toFixed(2)}:1`);
-    console.log(
-      `  cream through scrim   ${scrimmed.toFixed(2)}:1  ${scrimmed >= 4.5 ? 'PASS (AA)' : 'FAIL — needs a stronger scrim'}`,
-    );
-    console.log('');
-  }
+/** .clip__media mask: radial-gradient(130% 100% at 50% 45%, #000 60%, transparent 100%). */
+function maskAlpha(xf: number, yf: number): number {
+  const dx = (xf - 0.5) / 1.3;
+  const dy = (yf - 0.45) / 1.0;
+  const d = Math.sqrt(dx * dx + dy * dy) * 2;
+  if (d <= 0.6) return 1;
+  if (d >= 1) return 0;
+  return 1 - (d - 0.6) / 0.4;
 }
 
-console.log(`worst region through the scrim: ${worst.toFixed(2)}:1 (AA body text needs 4.5:1)`);
+/**
+ * `#video-stage::after` — the cream FLOOR.
+ *
+ * A floor, not a vignette. The edges-only wash this replaced protected the top
+ * and bottom of the frame and left the middle bare, which is precisely where
+ * the copy band sits: every act measured 1.00:1 there, because bean copy was
+ * landing on rgb(44,24,9) footage. Same mistake the old dark stage made in
+ * mirror image, so the same rule applies — lift the WHOLE frame to a measured
+ * floor, then add the edge wash on top of it.
+ *
+ * Pass an alpha as argv[2] to sweep it; the default is the shipped value.
+ */
+const FLOOR = Number(process.argv[2] ?? 0.62);
+
+function washAlpha(yf: number): number {
+  const edge = 0.3;
+  const extra =
+    yf <= 0.22 ? edge * (1 - yf / 0.22) : yf >= 0.78 ? edge * ((yf - 0.78) / 0.22) : 0;
+  // floor and edge wash composited in turn: a = f + e - f*e
+  return FLOOR + extra - FLOOR * extra;
+}
+
+interface Region {
+  act: string;
+  poster: string;
+  /** The act's own colour, from components.css. */
+  text: Rgb;
+  textName: string;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  /** The hero alone already has a local scrim; model it where it applies. */
+  heroScrim?: boolean;
+}
+
+/**
+ * `:root[data-webgl='true'] .hero::before`
+ * linear-gradient(100deg, amber-yellow 55% -> transparent at 62%).
+ */
+const AMBER_YELLOW: Rgb = { r: 0xf1, g: 0xc8, b: 0x2d };
+function heroScrimAlpha(xf: number): number {
+  const t = Math.min(1, Math.max(0, xf / 0.62));
+  return 0.55 * (1 - t);
+}
+
+/**
+ * Only the copy that is genuinely ON the stage.
+ *
+ * The cards are not: `.step` carries a bean-78% backdrop and `.card` is solid
+ * cream, so journey and product card copy sits on its own surface and was never
+ * at risk. What IS exposed is the section-level band every act opens with —
+ * `.eyebrow`, `.h-act`, `.lede` — which sits directly over the footage in all
+ * four (HeroCopy, JourneyCopy, Products, Quality all render it outside any card).
+ *
+ * Left-aligned within `.shell`, so the band is the upper-left two-thirds.
+ */
+const REGIONS: Region[] = [
+  // .hero { color: var(--bean) }, over the amber scrim `.hero::before` lays down.
+  { act: 'hero', poster: 'hero', text: BEAN, textName: 'bean', x: 0.06, y: 0.3, w: 0.56, h: 0.34, heroScrim: true },
+  /*
+   * .journey's section band. It used to be the one light-on-dark act, and on the
+   * dark stage that was right. On a light stage cream copy over cream floor is
+   * unreadable at any floor strength, so the band flips to bean copy with the
+   * stage on (components.css) and the STEP CARDS keep their cream — they sit on
+   * their own bean-78% plate and were never on the stage at all.
+   */
+  { act: 'journey', poster: 'hero', text: BEAN, textName: 'bean', x: 0.06, y: 0.16, w: 0.62, h: 0.3 },
+  // .product { color: var(--bean) } — heading band above the cards, over the pour.
+  { act: 'product', poster: 'product', text: BEAN, textName: 'bean', x: 0.06, y: 0.16, w: 0.62, h: 0.3 },
+  // .quality { color: var(--bean) } — inherits the product clip.
+  { act: 'quality', poster: 'product', text: BEAN, textName: 'bean', x: 0.06, y: 0.16, w: 0.62, h: 0.3 },
+];
+
+/** Viewport the sampling models. Desktop is the wide case the vertical clips crop hardest. */
+const VW = 1440;
+const VH = 900;
+
+const posters = new Map<string, { data: Uint8ClampedArray; w: number; h: number }>();
+for (const name of ['hero', 'product']) {
+  const image = await loadImage(`public/media/${name}.jpg`);
+  // object-fit: cover onto the viewport.
+  const scale = Math.max(VW / image.width, VH / image.height);
+  const dw = image.width * scale;
+  const dh = image.height * scale;
+  const canvas = createCanvas(VW, VH);
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(image, (VW - dw) / 2, (VH - dh) / 2, dw, dh);
+  posters.set(name, { data: ctx.getImageData(0, 0, VW, VH).data, w: VW, h: VH });
+}
+
+let worst = Infinity;
+let worstLabel = '';
+const failures: string[] = [];
+
+for (const region of REGIONS) {
+  const poster = posters.get(region.poster);
+  if (!poster) continue;
+
+  const x0 = Math.floor(region.x * VW);
+  const y0 = Math.floor(region.y * VH);
+  const w = Math.floor(region.w * VW);
+  const h = Math.floor(region.h * VH);
+
+  /*
+   * The worst cell is simply the one with the LOWEST contrast against this
+   * act's text — not the brightest, and not the darkest.
+   *
+   * Reaching for "brightest for dark copy, darkest for light copy" is the
+   * intuitive version and it is wrong in one direction: cream copy fails over
+   * BRIGHT areas, so tracking the darkest cell for it reports the best pixel in
+   * the block as though it were the worst. Compare ratios directly and the
+   * question does not arise.
+   */
+  const CELLS = 24;
+  let hit: Rgb = CREAM;
+  let hitRatio = Infinity;
+  let hitAt = '';
+
+  for (let cy = 0; cy < CELLS; cy += 1) {
+    for (let cx = 0; cx < CELLS; cx += 1) {
+      const sx0 = x0 + Math.floor((cx * w) / CELLS);
+      const sx1 = x0 + Math.floor(((cx + 1) * w) / CELLS);
+      const sy0 = y0 + Math.floor((cy * h) / CELLS);
+      const sy1 = y0 + Math.floor(((cy + 1) * h) / CELLS);
+
+      let r = 0;
+      let g = 0;
+      let b = 0;
+      let n = 0;
+      for (let y = sy0; y < sy1; y += 2) {
+        for (let x = sx0; x < sx1; x += 2) {
+          const i = (y * VW + x) * 4;
+          const xf = x / VW;
+          const yf = y / VH;
+          const footage: Rgb = {
+            r: poster.data[i] ?? 0,
+            g: poster.data[i + 1] ?? 0,
+            b: poster.data[i + 2] ?? 0,
+          };
+          // base -> footage through the feather mask -> top/bottom wash
+          let px = mix(stageBase(yf), footage, maskAlpha(xf, yf));
+          px = mix(px, CREAM, washAlpha(yf));
+          if (region.heroScrim) px = mix(px, AMBER_YELLOW, heroScrimAlpha(xf));
+          r += px.r;
+          g += px.g;
+          b += px.b;
+          n += 1;
+        }
+      }
+      if (n === 0) continue;
+      const cell = { r: r / n, g: g / n, b: b / n };
+      const cellRatio = contrast(region.text, cell);
+      if (cellRatio < hitRatio) {
+        hitRatio = cellRatio;
+        hit = cell;
+        hitAt = `${((cx + 0.5) / CELLS * 100).toFixed(0)}%,${((cy + 0.5) / CELLS * 100).toFixed(0)}%`;
+      }
+    }
+  }
+
+  const ratio = hitRatio;
+  const pass = ratio >= 4.5;
+  if (!pass) failures.push(`${region.act} (${region.textName}) ${ratio.toFixed(2)}:1`);
+  if (ratio < worst) {
+    worst = ratio;
+    worstLabel = `${region.act} (${region.textName} copy)`;
+  }
+
+  console.log(`${region.act}  —  ${region.textName} copy over ${region.poster}.jpg`);
+  console.log(
+    `  worst cell (lowest contrast, at ${hitAt} of the block)  rgb(${hit.r.toFixed(0)}, ${hit.g.toFixed(0)}, ${hit.b.toFixed(0)})`,
+  );
+  console.log(`  contrast  ${ratio.toFixed(2)}:1   ${pass ? 'PASS (AA)' : 'FAIL — AA body text needs 4.5:1'}`);
+  console.log('');
+}
+
+console.log(`cream floor under test: ${FLOOR}`);
+console.log(`worst: ${worstLabel} at ${worst.toFixed(2)}:1`);
+if (failures.length > 0) {
+  console.log(`\nFAILING: ${failures.join(', ')}`);
+  console.log(
+    'Fix by scrimming the act that fails (a local backdrop on its copy block), or\n' +
+      'by raising the cream floor in media.css — but check the failing act’s text\n' +
+      'colour first. Cream copy gets WORSE as the floor rises, so a cream failure is\n' +
+      'never a floor problem.',
+  );
+}

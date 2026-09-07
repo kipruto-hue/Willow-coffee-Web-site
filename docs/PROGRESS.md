@@ -462,3 +462,81 @@ bare. It is now a **floor**: 55% `--bean` at centre rising to 82% at the edges, 
 - Served on :5173 — page and all three posters 200, and the served HTML references no `three-` chunk.
 - **Still not seen in a browser.** The extension is not connected. Everything above is build output, HTTP
   and measured pixels; nobody has watched a crossfade or confirmed the clips pause when scrolling stops.
+
+
+---
+
+## Session — the light stage, and the floor it arrived without
+
+The stage was reworked from dark to light: the `--bean` background became a cream/marigold base, the
+blurred cover-fill behind each vertical clip was dropped for a radial feather mask, and the readability
+floor became a top-and-bottom-edges-only cream wash. The look is right. The wash was not.
+
+### Every act measured 1.00:1
+
+An edges-only wash protects the corners and leaves the middle of the frame bare — the same mistake the
+dark stage made, in mirror image, and the middle is exactly where each act's copy band sits. Re-measured
+against the real posters:
+
+```
+hero     bean copy    1.00:1     on rgb(44, 24, 9)
+journey  cream copy   1.85:1
+product  bean copy    1.00:1     on rgb(43, 24, 13)
+quality  bean copy    1.00:1
+```
+
+1.00:1 is not "low contrast", it is *bean copy landing on bean-coloured footage* — invisible, on every
+device, since `[data-webgl='true']` now applies on every path including phones and reduced motion.
+
+### Two different bugs wearing one number
+
+**The three bean acts needed a floor.** Not a vignette. Swept it:
+
+```
+0.50   3.92:1   FAIL
+0.58   5.07:1   the pass threshold
+0.62   5.72:1   <- shipped
+```
+
+Shipped at 0.62 rather than the 0.58 that just passes, because these numbers come from the poster
+**stills** and the encoded clips that replace them will bring frames the stills never showed. The
+headroom is the point.
+
+**Journey was not a floor problem at all,** and raising the floor made it *worse* — cream copy and a cream
+floor converge on the same colour. `.journey` is cream-on-dark, which was right when it painted its own
+maroon gradient and right again on the dark stage; on a light stage the band has to flip. It now takes
+`--bean` under `[data-webgl='true']`, and `.step` explicitly takes `--cream` back, because the step cards
+sit on their own near-solid bean plate and were never on the stage to begin with. Miss that and the flip
+turns four dark cards into bean-on-bean.
+
+This is why the checker measures **each act's own text colour** rather than one colour everywhere. Fixing
+"contrast" in a single direction would have made three acts worse to help one.
+
+### Rendered it, and the render said two things the numbers could not
+
+`npm run render:stage` composites the real stack — base, footage through the feather mask, floor, edge
+wash, the hero's amber scrim — to `.render/stage-*.png`. A ratio cannot tell you whether a photograph
+survived the floor that saved the words.
+
+- **The copy is unambiguously legible.** The floor works.
+- **The footage is faded.** At 62% cream it reads as fog over a photo rather than film. The legibility is
+  not in question; the vividness is, and that is a design call rather than a measurement — see Open.
+- **The COFFEELINK cup is centre-frame and large.** `videoManifest.ts` already flags it `replace: true`,
+  but as a footnote. Rendered, it is another brand's logo in the middle of the product act. The floor
+  makes it fainter; it does not make it acceptable.
+
+### Verified
+
+- 56 tests green, typecheck clean, `npm run build` green, bundle guard green at **123.2KB gz** / 400KB,
+  no `three` chunk.
+- `npm run check:contrast` — all four acts pass, worst **5.72:1** (journey) against AA's 4.5:1.
+- **Still not seen in a browser.** The extension would not connect again this session. Everything above is
+  build output and composited pixels; nobody has yet watched a crossfade or seen the clips pause.
+
+### Open
+
+- **How faded is too faded.** The floor may only come down if the copy gets a local scrim instead — a
+  backdrop on the act's own copy block, the way `.hero::before` already does it. Never a weaker floor on
+  its own. Eric's call, since it trades brand vividness against a number that is currently safe.
+- The COFFEELINK footage still has to be recropped or reshot.
+- Launch blockers unchanged: placeholder WhatsApp number, no harvest footage, no deploy target.

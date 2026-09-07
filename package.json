@@ -12,6 +12,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "render:harvest": "vite-node scripts/render-harvest-frames.ts",
+    "render:stage": "vite-node scripts/render-stage.ts",
     "prerender": "vite-node scripts/prerender.ts",
     "check:bundle": "vite-node scripts/check-bundle.ts",
     "check:contrast": "vite-node scripts/check-stage-contrast.ts",

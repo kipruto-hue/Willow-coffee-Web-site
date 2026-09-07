@@ -992,6 +992,31 @@
   position: relative;
 }
 
+/*
+ * Journey, on the video stage, flips to dark copy.
+ *
+ * `.journey` is cream-on-dark, which was right when the act painted its own
+ * maroon gradient and right again on the old dark stage. The stage is light
+ * now, and cream copy over a cream floor cannot be rescued by any floor
+ * strength — it measured 1.85:1 and got WORSE as the floor got stronger, since
+ * text and background were converging on the same colour.
+ *
+ * Only the section band (eyebrow + heading) is actually exposed. The step cards
+ * carry their own near-solid bean plate, so they keep cream — which is why the
+ * colour is restored on `.step` rather than left to inherit.
+ */
+:root[data-webgl='true'] .journey {
+  color: var(--bean);
+}
+
+:root[data-webgl='true'] .journey .eyebrow {
+  color: var(--ink-soft);
+}
+
+:root[data-webgl='true'] .journey .step {
+  color: var(--cream);
+}
+
 
 /* ---------------------------------------------------------- packaging shot --
  * The brand's packaging photograph, in the Product act. Full-bleed within the

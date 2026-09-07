@@ -1,132 +1,136 @@
-/* The video background stage (src/media/VideoStage.tsx). Fixed behind content. */
+/* The video background stage (src/media/VideoStage.tsx). Light, seamless, calm. */
 #video-stage {
   position: fixed;
   inset: 0;
   z-index: var(--z-canvas);
   pointer-events: none;
   overflow: hidden;
-  background: var(--bean);
+  /* Light warm base, not the old dark bean. The footage feathers into this. */
+  background: linear-gradient(
+    180deg,
+    var(--cream) 0%,
+    color-mix(in srgb, var(--marigold) 22%, var(--cream)) 100%
+  );
 }
 
 .clip {
   position: absolute;
   inset: 0;
   opacity: 0;
-  transition: opacity 700ms var(--ease-out-expo);
+  transition: opacity 1100ms var(--ease-out-expo);
 }
 .clip[data-active='true'] {
   opacity: 1;
 }
 
-/* Blurred cover-fill: makes the letterboxing a vertical clip leaves on a wide
-   screen read as deliberate depth rather than empty bars. */
-.clip__fill {
-  position: absolute;
-  inset: -6%;
-  background-size: cover;
-  background-position: center;
-  filter: blur(40px) saturate(1.15) brightness(0.68);
-  transform: scale(1.12);
-}
-
-/* The sharp frame, contained so a 9:16 source is never stretched. */
+/* Footage fills the frame, then its edges are feathered so it melts into the
+   page instead of ending on a hard rectangle. This is the "no seams" fix. */
 .clip__media {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
-  object-fit: contain;
+  object-fit: cover;
   object-position: center;
+  -webkit-mask-image: radial-gradient(130% 100% at 50% 45%, #000 60%, transparent 100%);
+  mask-image: radial-gradient(130% 100% at 50% 45%, #000 60%, transparent 100%);
 }
 
-@media (max-width: 760px) {
-  .clip__media { object-fit: cover; } /* phone matches the vertical source */
-  .clip__fill { display: none; }
+/*
+ * Slow, calm drift so even a still breathes. Real movement, not floaty AI.
+ *
+ * Gated on [data-moving] for the same reason the clips are: the site moves when
+ * the visitor moves it. A 22s drift running under copy nobody is scrolling is
+ * the ambient restlessness the footage was brought in to replace — and it is
+ * a composited animation on a full-screen layer, so it is not free either.
+ * `animation-play-state` holds the current frame rather than snapping home.
+ */
+@media (prefers-reduced-motion: no-preference) {
+  .clip[data-active='true'] .clip__media {
+    animation: clip-drift 22s ease-in-out infinite alternate;
+  }
+  #video-stage[data-moving='false'] .clip__media {
+    animation-play-state: paused;
+  }
+}
+@keyframes clip-drift {
+  from { transform: scale(1.03); }
+  to { transform: scale(1.09) translate3d(0, -1.5%, 0); }
 }
 
-/* Brand grade: pulls three different clips toward Willow amber so they read as
-   one system, not three stock downloads. */
+/* Light warm grade: unifies colour a touch while staying bright. */
 .stage-grade {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  mix-blend-mode: overlay;
+  opacity: 0.7;
+  mix-blend-mode: soft-light;
   background: linear-gradient(
     180deg,
-    color-mix(in srgb, var(--amber-yellow) 22%, transparent) 0%,
-    color-mix(in srgb, var(--amber-orange) 16%, transparent) 55%,
-    color-mix(in srgb, var(--amber-deep) 30%, transparent) 100%
+    color-mix(in srgb, var(--amber-yellow) 20%, transparent),
+    color-mix(in srgb, var(--marigold) 14%, transparent)
   );
 }
 
-/* Readability + edge fall-off so copy over the footage always keeps contrast. */
+/*
+ * A FLOOR, not a vignette. (The same rule the dark stage learned, in mirror.)
+ *
+ * This was an edges-only wash: cream at the top and bottom, clear through the
+ * middle. The middle is exactly where every act's copy band sits, so measured
+ * against the real posters (`npm run check:contrast`, worst cell not mean)
+ * ALL FOUR acts came back at 1.00:1 — bean copy landing on rgb(44, 24, 9)
+ * footage. Lifting only the edges protects the corners and abandons the words.
+ *
+ * So: a flat cream floor across the whole frame, with the edge wash on top of
+ * it. Measured worst cell, by floor strength:
+ *
+ *   0.50  3.92:1  FAIL
+ *   0.58  5.07:1  the pass threshold
+ *   0.62  5.72:1  <- shipped, ~27% headroom over AA
+ *
+ * AA body text needs 4.5:1. The headroom is deliberate: these numbers come from
+ * the poster STILLS, and the encoded clips that replace them will bring frames
+ * the posters never showed. Do not lower this to make the footage more vivid.
+ * If a clip reads too faded once real footage lands, the fix is a local scrim
+ * on the act that needs it (`.hero::before` is already one) — never a weaker
+ * floor here, because the copy is over ALL of it, on every device, including
+ * the phones and reduced-motion visitors who get the poster and never see a
+ * frame of video at all.
+ */
 #video-stage::after {
   content: '';
   position: absolute;
   inset: 0;
   pointer-events: none;
-  /*
-   * A FLOOR, not a vignette.
-   *
-   * This started as `transparent 42% -> bean 62%`, which protects the corners
-   * and leaves the middle of the frame — where the product cards sit — bare.
-   * Measured against the real posters (`npm run check:contrast`, worst cell not
-   * mean, because one specular highlight under one word is a real failure an
-   * average erases):
-   *
-   *   cream on bare hero footage      2.61:1
-   *   cream on bare product footage   1.60:1   <- the pour's bright cup and smoke
-   *
-   * AA body text needs 4.5:1. The floor of 55% bean takes the worst cell to
-   * 4.9:1 and the edges to 8:1+. This is why the number is what it is; do not
-   * lower it to make the footage brighter. If the video reads too dark once real
-   * clips land, the fix is a local scrim on the act that needs it (`.hero::before`
-   * is already one), never a weaker floor here — the copy is over ALL of it now,
-   * on every device, including the phones and reduced-motion visitors who used
-   * to get an opaque gradient and never met this stage at all.
-   */
-  background: radial-gradient(
-    120% 80% at 50% 38%,
-    color-mix(in srgb, var(--bean) 55%, transparent) 0%,
-    color-mix(in srgb, var(--bean) 82%, transparent) 100%
-  );
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--cream) 30%, transparent) 0%,
+      transparent 22%,
+      transparent 78%,
+      color-mix(in srgb, var(--cream) 30%, transparent) 100%
+    ),
+    color-mix(in srgb, var(--cream) 62%, transparent);
 }
 
-/* Moving film grain across the whole stage. */
+/* A whisper of static grain — enough to avoid a plasticky look, not enough to
+   read as dirt. */
 .stage-grain {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  opacity: 0.1;
+  opacity: 0.05;
   mix-blend-mode: overlay;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  background-size: 160px 160px;
-}
-@media (prefers-reduced-motion: no-preference) {
-  .stage-grain { animation: stage-grain-move 0.6s steps(3) infinite; }
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 180px 180px;
 }
 
-/*
- * The grain moves with the site, like the footage does. A page nobody is
- * scrolling is a still photograph, grain included — a shimmer running under
- * static copy is exactly the restlessness the real footage was brought in to
- * replace. `animation-play-state` freezes it on its current frame rather than
- * snapping back to the first one.
- */
-#video-stage[data-moving='false'] .stage-grain {
-  animation-play-state: paused;
-}
-@keyframes stage-grain-move {
-  0% { background-position: 0 0; }
-  33% { background-position: -28px 12px; }
-  66% { background-position: 18px -22px; }
-  100% { background-position: 0 0; }
-}
-
-/* Origin split-panel clip. */
+/* Origin split-panel clip: feathered so it blends into the panel, no hard edge. */
 .origin__video {
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
+  -webkit-mask-image: radial-gradient(130% 110% at 50% 45%, #000 58%, transparent 100%);
+  mask-image: radial-gradient(130% 110% at 50% 45%, #000 58%, transparent 100%);
 }
