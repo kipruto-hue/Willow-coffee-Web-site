@@ -330,3 +330,71 @@ reads as a printed band all the way round. Caught by opening the PNG, not by any
 **Nothing has been run in a browser, across five sessions.** These fixes were verified by typecheck, by
 tests, and by opening the generated PNGs — the geometry they are mapped onto has still never been seen
 rendered. Launch blockers in `docs/LAUNCH_CHECKLIST.md` are unchanged.
+
+---
+
+## Session 06 — 2026-09-07 — the first time it was served
+
+Erick: "run build in port 5173". `npm run preview -- --port 5173 --strictPort`, serving the production
+build. The Chrome extension is still not connected and there is no headless driver in the project, so
+this was verified over HTTP, not looked at. **Still nobody has seen this site render.**
+
+Every asset resolves: entry JS, CSS, both fonts, and all six brand images (200, correct content types).
+
+### And serving it immediately exposed a §2/§9 violation that had been shipping
+
+`dist/index.html` carried `<link rel="modulepreload" href="/assets/three-DMNmsdCy.js">`, and the entry
+chunk opened with:
+
+```js
+import{u as j,r as h,j as r,…}from"./three-DMNmsdCy.js"
+```
+
+Those are React's hooks and jsx-runtime. React is shared between the DOM path and the canvas subtree, and
+because `manualChunks` named a `three` chunk but left React unnamed, Rollup settled React *into* it. So
+the entry had to reach into the 3D chunk to get React — **statically**. Vite then dutifully preloaded the
+3D chunk from the HTML head. Every lite visitor, phones included, downloaded **335KB gz of WebGL to
+render plain DOM** — the exact thing §2's mobile-lite mandate and decision D10 exist to prevent.
+
+**The bundle guard reported `initial payload: 62.8KB gz … ok` throughout.** Its assertion was that no
+entry chunk *contains* `WebGLRenderer` — and none did. `WebGLRenderer` was in `three-*.js`, exactly where
+it belongs; the entry just imported that file. The guard checked a proxy for the property, and the proxy
+stayed true while the property broke. Same family as the bug it was originally written for (the catch-all
+`vendor` chunk), from the other direction: that pulled 3D-only code into the entry, this pushed entry code
+into the 3D chunk. Both end with the lite visitor downloading three.js.
+
+### What was actually absorbed
+
+Pinning React to its own chunk was not enough — the guard failed again, correctly. Rather than guess, a
+throwaway Rollup plugin (`generateBundle`) printed the modules in the 3D chunk that were neither under
+`src/canvas/` nor a 3D dependency:
+
+```
+vite/preload-helper.js          <- the dynamic-import helper itself
+zustand/*, use-sync-external-store/*
+src/store/useAppStore.ts
+src/content/site.ts
+```
+
+Everything else it listed — maath, n8ao, @use-gesture, its-fine, suspend-react, react-use-measure — is
+drei's own tree and correctly there. Those five are now named into an `app` chunk.
+
+### The guard, rewritten to assert the property
+
+Two checks were added and one of them was wrong at first, in an instructive way. A plain
+`source.includes(threeChunkName)` fires on the entry's `__vite__mapDeps` array and on
+`import("./three-*.js")` — the legitimate lazy machinery — so it reported a collapse that had not
+happened. It now matches static import syntax only (`from"./three-*.js"` / bare `import"./three-*.js"`),
+with the trailing `(` and the quoted array entry being exactly what separates lazy from eager. Plus a
+check that `dist/index.html` never names the 3D chunk at all, which is where this was visible from the
+outside.
+
+### Verified
+
+- Entry chunk's only static imports are now `app`, `react` and `scroll`. The 3D chunk appears solely
+  inside `import(...)` and `__vite__mapDeps`.
+- `dist/index.html` preloads `react`, `app`, `scroll`, CSS. **No three.**
+- Guard green and now honest: **initial payload 127.0KB gz** / 400KB budget, 3D chunk 262.8KB gz lazy.
+  The old 62.8KB was fiction — React was hidden inside the 3D chunk, uncounted and downloaded anyway.
+  A lite visitor goes from ~398KB gz to 127KB gz.
+- 47 tests green, typecheck clean, build green.
