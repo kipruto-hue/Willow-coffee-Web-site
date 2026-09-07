@@ -66,16 +66,21 @@ export const useAppStore = create<AppState>((set) => ({
     set((s) => (s.actNear[act] === near ? s : { actNear: { ...s.actNear, [act]: near } })),
 
   /**
-   * Tier only ever goes DOWN, and never back up within a session.
+   * Tier only ever goes DOWN, never back up within a session, and never below
+   * `mid`.
    *
    * A tier that can be promoted again will oscillate the moment the measurement
    * sits near the threshold, and the visitor sees the scene change quality
    * mid-scroll — which is far worse than simply running one notch conservative.
+   *
+   * The floor matters just as much: `low` fails `shouldUseWebGL`, so demoting
+   * to it unmounts the canvas and drops the visitor onto the lite path for the
+   * rest of the session. That is not a quality step, it is the end of the
+   * experience, and no transient frame-time dip should be able to cause it.
+   * Only `detectStaticTier` — which knows it is looking at a phone, a coarse
+   * pointer or Save-Data — may set `low`, through `setDeviceTier`.
    */
-  demoteTier: () =>
-    set((s) => ({
-      deviceTier: s.deviceTier === 'high' ? 'mid' : 'low',
-    })),
+  demoteTier: () => set((s) => (s.deviceTier === 'high' ? { deviceTier: 'mid' } : s)),
   setDeviceTier: (tier) => set({ deviceTier: tier }),
   setReducedMotion: (v) => set({ reducedMotion: v }),
   setReady: (v) => set({ ready: v }),

@@ -247,3 +247,86 @@ and 5, in one pass. **All six phases are now built.**
 added the three.js packages to `C:\Users\SPECTRE\package.json` (the user's home directory, outside this
 repo). It was noticed immediately and reverted with `npm uninstall`; that file is back to its original two
 dependencies. Flagged here because it touched a file outside the project.
+
+---
+
+## Session 04 — 2026-09-04 (commit `ebcc097`, logged retrospectively)
+
+Committed but never written up here; recorded now from the commit message so a cold start sees it.
+
+Two faults made the site look cheap, and only one was in the design.
+
+1. **The scene deleted itself.** `FrameMeter` demoted `high → mid → low`, and `shouldUseWebGL()` returns
+   false for `low`, so a single frame-time dip permanently unmounted the canvas and dropped the visitor
+   onto the lite DOM path for the rest of the session. Anyone reviewing the site on a laptop with an
+   integrated GPU was reviewing the fallback. The budget moved 33ms → 42ms and the meter was made to
+   stop at `mid`.
+2. **There was no artwork.** `public/brand/` held one file. `src/brand/willowPattern.ts` now traces the
+   drooping willow-branch motif from the supplied packaging photograph and redraws it as Canvas2D, so it
+   renders at any resolution with no studio lighting baked in. `npm run build:brand` composites it with
+   the real logo into `pouch-front.png` and `cup-wrap.png`, and writes `.render/brand-compare.png` so the
+   result can be judged beside the photograph. It was judged four times; the first three were a wheat ear,
+   a palm frond and a fishbone. The photographs are also used *as photographs* in the Product act DOM.
+
+The amber tokens were verified by sampling the bag rather than assumed, closing a blocking checklist item.
+Nothing in `tokens.css` changed — it was already right.
+
+---
+
+## Session 05 — 2026-09-07 — reviewing session 04's diff
+
+Erick put the session 04 diff up for review. Four defects in it, all of the same family: a change was made
+in one file and the thing that had to agree with it was in another.
+
+### The tier floor was in the caller, not the invariant
+
+Session 04 fixed the vanishing canvas with `if (deviceTier === 'high') demoteTier()` at the one call site.
+`demoteTier` itself still returned `low` for any tier that was not `high`, so the fix held only as long as
+`FrameMeter` stayed the only caller. The floor now lives in the store, where the invariant is: `demoteTier`
+goes `high → mid` and then stops. `setDeviceTier` still reaches `low` — that is `detectStaticTier`'s path,
+and it is the deliberate one, because it knows it is looking at a phone rather than guessing from a dip.
+
+`FrameMeter` also reset its cooldown and cleared its 90-frame window every time it was over budget at
+`mid`, forever, achieving nothing. It now returns early at the floor and keeps reporting. Two stale
+comments went with it: the header still described `mid → low` unmounting the canvas, and `BUDGET_MS`
+was labelled "~30fps" when 42ms is ~24 — the slack is deliberate (a p95 catches scroll bursts and texture
+uploads) but it should say so.
+
+### The artwork did not fit the geometry it was mapped onto
+
+Session 04 added the textures and wired the callers, but nothing checked the two against each other.
+
+- **The cup wrap was squashed 30%.** `cup-wrap.png` was drawn 1600×900 (1.78:1). The body it wraps —
+  a 0.52/0.4 × 1.15 frustum — unrolls to π(0.52+0.4)/1.15 ≈ **2.51:1**. The difference lands on the
+  lockup in the middle of the wrap, which contains the logo §2 says may not be stretched. The script now
+  takes the ratio from the geometry (`CUP_WRAP_ASPECT`), not from a chosen number: 1600×637.
+- **The pouch panel was stretched 4%.** A hard-coded `planeGeometry(0.8, 1.05)` (0.762) under a 1024×1400
+  image (0.731). The panel now derives its height from the texture's real pixel dimensions, the same way
+  `LogoBean` derives its plane — which is exactly the pattern that existed to prevent this.
+- **The cup's brand band covered the artwork.** The bean-coloured band is a solid cylinder at a *larger*
+  radius than the body, sitting over the middle 36% of it — dead centre, where the lockup is drawn. It was
+  the stand-in for artwork; with artwork it is an occluder. It renders only when there is no wrap.
+
+`src/canvas/objects/packaging.ts` now holds the dimensions both the meshes and the build script need, so
+they cannot drift apart again silently.
+
+### Looked at it, then fixed it again
+
+Re-rendering the wrap at the correct 2.51:1 made the willow field wrong in a new way: one row of
+full-height branches on a panel a third as tall bunched four branches at each edge and left the middle —
+the half of the cup facing the camera — as bare gradient. Two rows of shorter branches at ten columns
+reads as a printed band all the way round. Caught by opening the PNG, not by any assertion.
+
+### Verified
+
+- **47 tests green** (8 new). `packaging.test.ts` asserts the drawn wrap matches the ratio the body
+  unrolls to and that the pouch panel takes the artwork's ratio *whatever the artwork is* — the property,
+  not the current number. `useAppStore.test.ts` pins the demote floor and, explicitly, the thing it
+  protects: repeated demotion never takes a visitor out of the WebGL experience.
+- `npm run typecheck` clean, `npm run build` green, bundle guard green.
+
+### Unchanged and still true
+
+**Nothing has been run in a browser, across five sessions.** These fixes were verified by typecheck, by
+tests, and by opening the generated PNGs — the geometry they are mapped onto has still never been seen
+rendered. Launch blockers in `docs/LAUNCH_CHECKLIST.md` are unchanged.

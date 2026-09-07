@@ -22,6 +22,7 @@ import {
   brandGradient,
   drawWillowField,
 } from '../src/brand/willowPattern';
+import { CUP_WRAP_ASPECT } from '../src/canvas/objects/packaging';
 
 type Ctx = CanvasRenderingContext2D;
 
@@ -107,24 +108,34 @@ function panel(width: number, height: number, columns: number, rows: number, see
 {
   // Unrolled: circumference by height. Wider than tall, and the seam falls at
   // the back where the cylinder's UV wraps.
+  //
+  // The aspect ratio is NOT chosen here. It comes from the cup body's own
+  // dimensions (`CUP_WRAP_ASPECT`), because a wrap drawn at any other ratio is
+  // squashed by exactly the difference the moment it is mapped — and what is
+  // squashed is the lockup in the middle of it. Drawn at 16:9, this artwork was
+  // being compressed 30% horizontally on a body that unrolls to ~2.51:1.
   const W = 1600;
-  const H = 900;
+  const H = Math.round(W / CUP_WRAP_ASPECT);
   const canvas = createCanvas(W, H);
   const ctx = canvas.getContext('2d') as unknown as Ctx;
 
   ctx.fillStyle = brandGradient(ctx, H);
   ctx.fillRect(0, 0, W, H);
+  // Denser and smaller than the pouch's field: this panel is a third as tall, so
+  // one row of full-height branches leaves the middle of the cup — the half
+  // facing the camera — as bare gradient. Two rows of shorter branches read as
+  // a printed band all the way round.
   drawWillowField(ctx, W, H, {
-    columns: 7,
+    columns: 10,
     rows: 2,
     seed: 13,
-    avoid: { x: W * 0.42, y: H * 0.36, w: W * 0.16, h: H * 0.4 },
+    avoid: { x: W * 0.44, y: H * 0.28, w: W * 0.12, h: H * 0.5 },
   });
 
-  drawLockup(ctx, W * 0.5, H * 0.5, W * 0.075);
+  drawLockup(ctx, W * 0.5, H * 0.46, W * 0.075);
 
   writeFileSync(`${OUT}/cup-wrap.png`, canvas.toBuffer('image/png'));
-  console.log('cup-wrap.png', `${W}x${H}`);
+  console.log('cup-wrap.png', `${W}x${H}`, `aspect ${(W / H).toFixed(3)}`);
 }
 
 /* ------------------------------------------------- motif alone, for the DOM -- */

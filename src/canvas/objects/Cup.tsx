@@ -1,24 +1,30 @@
-import { Suspense, useRef } from 'react';
+import { Suspense, useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { useTexture } from '@react-three/drei';
 import { SRGBColorSpace, type Group } from 'three';
 import { brandColors } from '../palette';
 import { readAppState } from '../../store/useAppStore';
+import { CUP_BODY } from './packaging';
 import type { ActId } from '../../content/types';
 
 /**
  * The cup (§7).
  *
  * The brief says to wrap the existing packaging render as a texture rather than
- * model a cup. That render does not exist (docs/ASSETS.md), so this is the
- * documented fallback: tapered cylinder, lid rim, a cream band, in brand colours
- * only. When the render arrives it becomes a `map` on this same material and
- * nothing else changes.
+ * model a cup. With no supplied render, `npm run build:brand` draws one:
+ * `public/brand/cup-wrap.png`, at the aspect ratio this body unrolls to
+ * (`CUP_WRAP_ASPECT`). Without a wrap this falls back to brand colours — a
+ * tapered cylinder with a bean-coloured band standing in for the artwork.
  */
-/** Unrolled cup wrap art, mapped around the body once it exists (§7). */
+/** Unrolled cup wrap art, mapped around the body. */
 function CupSkin({ path }: { path: string }) {
   const map = useTexture(path);
-  map.colorSpace = SRGBColorSpace;
+  useMemo(() => {
+    map.colorSpace = SRGBColorSpace;
+    // The wrap is read at a glancing angle around most of the cylinder, which is
+    // exactly where an unfiltered texture turns the wordmark to mush.
+    map.anisotropy = 4;
+  }, [map]);
   return <meshStandardMaterial map={map} roughness={0.5} metalness={0.02} />;
 }
 
@@ -55,7 +61,9 @@ export function Cup({
     <group ref={group} position={position} scale={scale}>
       {/* body, slightly tapered */}
       <mesh castShadow={false}>
-        <cylinderGeometry args={[0.52, 0.4, 1.15, 64, 1, true]} />
+        <cylinderGeometry
+          args={[CUP_BODY.radiusTop, CUP_BODY.radiusBottom, CUP_BODY.height, 64, 1, true]}
+        />
         {wrap ? (
           <Suspense
             fallback={<meshStandardMaterial color={c.marigold} roughness={0.55} metalness={0.02} />}
@@ -67,11 +75,16 @@ export function Cup({
         )}
       </mesh>
 
-      {/* the brand band */}
-      <mesh position={[0, -0.12, 0]}>
-        <cylinderGeometry args={[0.487, 0.44, 0.42, 40, 1, true]} />
-        <meshStandardMaterial color={c.bean} roughness={0.7} />
-      </mesh>
+      {/* The brand band — the stand-in for artwork, and ONLY that. It is a solid
+          cylinder at a larger radius than the body it sits on, so with a wrap
+          applied it hides the middle third of the artwork: the lockup, which is
+          drawn dead centre. Nothing to stand in for, nothing to draw. */}
+      {!wrap && (
+        <mesh position={[0, -0.12, 0]}>
+          <cylinderGeometry args={[0.487, 0.44, 0.42, 40, 1, true]} />
+          <meshStandardMaterial color={c.bean} roughness={0.7} />
+        </mesh>
+      )}
 
       {/* lid */}
       <mesh position={[0, 0.6, 0]}>

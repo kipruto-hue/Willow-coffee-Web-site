@@ -16,13 +16,21 @@ import { useAppStore } from '../store/useAppStore';
  *   3. Demotion is one-way (see `demoteTier`) and there is a cooldown after each
  *      one, so the scene cannot oscillate between quality levels mid-scroll.
  *
- * high → mid drops post-processing and instance counts. mid → low unmounts the
- * canvas entirely and the visitor gets the lite path (§10).
+ * high → mid drops post-processing and instance counts. There is no automatic
+ * step below that: `demoteTier` floors at `mid`, because `low` unmounts the
+ * canvas into the lite path (§10) and that is too destructive to trigger on a
+ * frame-time dip. Once the scene is at `mid` this meter only reports.
  */
 const WINDOW = 90;
 const WARMUP_MS = 1800;
 const COOLDOWN_MS = 2500;
-/** ~30fps. §2's floor: below this, switch. */
+/**
+ * ~24fps at p95. §2's floor is 30fps, but the p95 of a scroll-driven scene sits
+ * well above its typical frame time — a scroll burst, a texture upload or one
+ * GC lands there — so judging §2's floor on the p95 demotes scenes that are in
+ * fact running at 60. The budget is deliberately slacker than the target it
+ * protects.
+ */
 const BUDGET_MS = 42;
 
 export function FrameMeter({ onReport }: { onReport?: (p95: number) => void }) {
@@ -45,15 +53,14 @@ export function FrameMeter({ onReport }: { onReport?: (p95: number) => void }) {
     onReport?.(p95);
 
     if (p95 <= BUDGET_MS) return;
+    // Already at the floor: nothing left to drop, so leave the window intact and
+    // keep reporting. Clearing the buffer here would just churn it forever.
+    if (useAppStore.getState().deviceTier !== 'high') return;
     if (now - lastDemotion.current < COOLDOWN_MS) return;
 
     lastDemotion.current = now;
     buf.length = 0;
-    // Only ever step down to 'mid' automatically. Dropping to 'low' unmounts the
-    // whole canvas into the lite path for the rest of the session, which is far
-    // too destructive to trigger on a transient dip. If 'mid' still can't cope,
-    // leave it: a slightly heavy scene beats the scene vanishing.
-    if (useAppStore.getState().deviceTier === 'high') useAppStore.getState().demoteTier();
+    useAppStore.getState().demoteTier();
   });
 
   return null;

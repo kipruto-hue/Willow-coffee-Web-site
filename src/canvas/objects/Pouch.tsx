@@ -1,29 +1,60 @@
-import { Suspense, useRef } from 'react';
+import { Suspense, useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { useTexture } from '@react-three/drei';
-import { MathUtils, SRGBColorSpace, type Group } from 'three';
+import { MathUtils, SRGBColorSpace, type ColorRepresentation, type Group } from 'three';
 import { brandColors } from '../palette';
 import { readAppState } from '../../store/useAppStore';
+import { POUCH_BODY, POUCH_PANEL_WIDTH, pouchPanelHeight } from './packaging';
 import type { ActId } from '../../content/types';
 
 /**
  * The retail pouch (§7).
  *
  * §7 asks for the existing pouch render mapped onto a lightly bent plane so the
- * artwork does the work. That render does not exist (docs/ASSETS.md), so this is
- * the fallback: a kraft-coloured body with the gusset and the top seal picked
- * out, brand colours only. The moment a render exists it becomes the `map` on
- * the body material.
+ * artwork does the work. With no supplied render, `npm run build:brand` draws
+ * one: `public/brand/pouch-front.png`. Without artwork this falls back to a
+ * kraft-coloured body with the gusset and the top seal picked out, brand
+ * colours only.
  *
  * It rotates gently into focus across Act 4 and then holds — §8 is explicit that
  * this act is where people decide to buy, so the motion stops being interesting
  * and gets out of the way of the CTAs.
  */
-/** Front-panel packaging artwork, mapped onto the panel once it exists (§7). */
+/**
+ * The front panel, geometry included.
+ *
+ * The height is DERIVED from the artwork's real pixel dimensions rather than
+ * chosen, exactly as `LogoBean` derives its plane — because the lockup is drawn
+ * on this artwork, and a panel whose aspect ratio disagrees with the image
+ * stretches the logo, which §2 forbids. A hard-coded panel height is how that
+ * happens silently: the numbers look plausible and the mark is 4% wide.
+ */
 function PouchArt({ path }: { path: string }) {
   const map = useTexture(path);
-  map.colorSpace = SRGBColorSpace;
-  return <meshStandardMaterial map={map} roughness={0.75} />;
+  useMemo(() => {
+    map.colorSpace = SRGBColorSpace;
+    map.anisotropy = 4;
+  }, [map]);
+
+  const image = map.image as { width: number; height: number };
+  const height = pouchPanelHeight(image.width, image.height);
+
+  return (
+    <>
+      <planeGeometry args={[POUCH_PANEL_WIDTH, height]} />
+      <meshStandardMaterial map={map} roughness={0.75} />
+    </>
+  );
+}
+
+/** Shown while the artwork loads, and when there is none. */
+function PouchPanelFallback({ color }: { color: ColorRepresentation }) {
+  return (
+    <>
+      <planeGeometry args={[POUCH_PANEL_WIDTH, POUCH_PANEL_WIDTH / 0.762]} />
+      <meshStandardMaterial color={color} roughness={0.75} />
+    </>
+  );
 }
 
 export function Pouch({
@@ -60,30 +91,29 @@ export function Pouch({
     <group ref={group} position={position} scale={scale}>
       {/* body */}
       <mesh>
-        <boxGeometry args={[0.95, 1.35, 0.34]} />
+        <boxGeometry args={[POUCH_BODY.width, POUCH_BODY.height, POUCH_BODY.depth]} />
         <meshStandardMaterial color={c.tan} roughness={0.85} metalness={0.02} />
       </mesh>
 
-      {/* front panel — where the packaging artwork will be mapped */}
-      <mesh position={[0, -0.05, 0.172]}>
-        <planeGeometry args={[0.8, 1.05]} />
+      {/* front panel — the packaging artwork */}
+      <mesh position={[0, -0.05, POUCH_BODY.depth / 2 + 0.002]}>
         {art ? (
-          <Suspense fallback={<meshStandardMaterial color={c.bean} roughness={0.75} />}>
+          <Suspense fallback={<PouchPanelFallback color={c.bean} />}>
             <PouchArt path={art} />
           </Suspense>
         ) : (
-          <meshStandardMaterial color={c.bean} roughness={0.75} />
+          <PouchPanelFallback color={c.bean} />
         )}
       </mesh>
 
       {/* top seal */}
       <mesh position={[0, 0.72, 0]}>
-        <boxGeometry args={[0.97, 0.1, 0.36]} />
+        <boxGeometry args={[POUCH_BODY.width + 0.02, 0.1, POUCH_BODY.depth + 0.02]} />
         <meshStandardMaterial color={c.beanSoft} roughness={0.8} />
       </mesh>
 
       {/* degassing valve — the detail §8 actually names */}
-      <mesh position={[0.26, 0.3, 0.175]} rotation={[Math.PI / 2, 0, 0]}>
+      <mesh position={[0.26, 0.3, POUCH_BODY.depth / 2 + 0.005]} rotation={[Math.PI / 2, 0, 0]}>
         <cylinderGeometry args={[0.055, 0.055, 0.01, 16]} />
         <meshStandardMaterial color={c.cream} roughness={0.4} />
       </mesh>
