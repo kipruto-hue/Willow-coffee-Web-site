@@ -9,6 +9,7 @@ import { Contact } from './dom/Contact';
 import { Footer } from './dom/Footer';
 import { StickyCTA } from './dom/StickyCTA';
 import { StoryThread } from './dom/StoryThread';
+import { Showcase } from './dom/Showcase';
 import { structuredData } from './lib/structuredData';
 
 /**
@@ -39,6 +40,8 @@ export function SiteContent() {
         <HeroCopy />
         <StoryThread />
         <OriginCopy />
+        <StoryThread />
+        <Showcase />
         <StoryThread />
         <JourneyCopy />
         <StoryThread />

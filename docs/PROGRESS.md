@@ -772,3 +772,71 @@ the floating stage does not shift as they load.
   see. If this is the intended direction, `videoManifest.ts` can lose two entries.
 - COFFEELINK footage — still open, and now confined to the quality act.
 - Launch blockers unchanged: placeholder WhatsApp number, no harvest footage, no deploy target.
+
+---
+
+## Session 09d — 2026-09-08 — the showcase band, and the plate that was a rectangle
+
+Erick's third diff: a `Showcase` interstitial between the origin story and the journey — the packaging
+floating over a dark macro-beans backdrop — plus a collapse of the origin act's 220vh.
+
+### Both of the diff's premises were checked, and both held
+
+- **The 220vh really is dead space.** `OriginCopy` renders `OriginClip` (a poster/video), and
+  `OriginSequence` — the scrubbed canvas that scroll room was cut for — **is imported by nothing**. Two
+  viewports of empty page were reserved for a component that never mounts. Collapsed.
+- That also makes the `.origin__canvas` grade added in 09b **dead CSS**, targeting the same unmounted
+  component. Removed. The grain beside it stays: it hangs off `.origin__media`, which does exist.
+
+### Three things fixed rather than shipped as written
+
+**`/media/koffee.jpg` did not exist.** The file was on disk as `koffee (1).jpg`, a browser download
+name. Renamed; the section would have shown an empty box.
+
+**`useActProgress('product')` on the Showcase was a real bug, not a comment.** The draft called it
+"purely visual", but that hook does not read — it WRITES shared state (`setActProgress`, `setActNear`,
+`setActiveAct`). Two sections claiming one act id means scrolling this band would mark the product act
+active while the visitor is four sections away: Products highlighted in the nav, the stage cueing the
+product clip early, and — since 09b — the sticky CTA hiding on the wrong screen. Nothing here reads act
+progress (the floats are CSS animations), so the correct wiring is **none**. Hook and ref removed.
+
+**Cream copy on a photograph, again.** `.showcase__scrim`'s radial is transparent to 28% and the copy is
+centred, so the words land on bare beans in the one place the scrim protects least. Measured:
+**3.56:1, FAIL** — the same shape of bug as the stage's edges-only wash, protection everywhere except
+where the words are. Fixed the way the floor was, locally rather than by darkening the whole scrim,
+which would bury the photograph the section exists to show:
+
+```
+plate 0.00   3.56:1   FAIL
+plate 0.25   5.09:1   the pass threshold
+plate 0.40   6.41:1   <- shipped, in line with journey (6.67) and quality (6.46)
+```
+
+### The first plate was a rectangle, and only the render showed it
+
+At `inset: -12% -8%` with `120% 130%` radii the gradient still carried **alpha 0.40 at the box corners**.
+A gradient is painted only inside its element's box, so CSS clipped it into a hard-edged bean rectangle
+sitting on the photograph — the cream-rectangle failure in mirror image. The contrast number was fine
+(6.54:1) and said nothing about it; `.render/showcase-scrim.png` showed it immediately.
+
+Solved by sweeping for two conditions at once — contrast over the text, and alpha anywhere on the box
+perimeter. Shipped `inset: -60% -25%` with `50% 50%` radii: **6.41:1, perimeter alpha 0.000**. Re-rendered:
+no rectangle.
+
+### Verified
+
+- 56 tests green, typecheck clean, `npm run build` green, bundle **124.7KB gz** / 400KB, no `three` chunk.
+- `npm run check:contrast` — the two remaining stage acts pass, worst **6.46:1**.
+- Prerender carries `showcase__stage`, `showcase__scrim` and `/media/koffee.jpg`; zero `koffee (1)` refs.
+- **Still not seen in a browser by me** — the extension would not connect. Dev server live on 5173.
+
+### Open
+
+- **`koffee.jpg` is 650×975.** Full-bleed `cover` on a 1440×760 band it upscales ~2.2×. That is the third
+  time resolution has bitten (hero.jpg, the stage stills), and the pattern is worth naming: a supplied
+  phone-sized image used full-bleed will read soft no matter what the scrim does. The heavy dark scrim
+  hides it better here than anywhere else, so this is a judgement call rather than a defect — but a
+  larger source would be strictly better.
+- The hero and product clips still crossfade behind opaque sections. With the showcase added, the stage
+  is now visible in **journey and quality only**; `videoManifest.ts` could lose two entries.
+- COFFEELINK footage, and the unchanged launch blockers: WhatsApp number, harvest footage, deploy target.

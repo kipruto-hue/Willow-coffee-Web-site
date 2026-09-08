@@ -1070,9 +1070,10 @@
    its own moving film grain and a slight grade, so a procedural fallback reads
    more like footage and less like crisp vector art. Remove once the real
    scrubbed sequence lands — real footage brings its own grain. */
-.origin__canvas {
-  filter: contrast(1.05) saturate(1.04);
-}
+/* NB: the `.origin__canvas` grade that used to sit here was removed — it
+   targeted `OriginSequence`, which nothing imports. The panel renders
+   `OriginClip` (a poster/video, `.origin__video`). The grain below still
+   applies, because it hangs off `.origin__media`, which does exist. */
 .origin__media::before {
   content: '';
   position: absolute;
@@ -1327,4 +1328,127 @@
 @keyframes thread-bob {
   0%, 100% { transform: rotate(45deg) translate(-2px, -2px); opacity: 0.6; }
   50% { transform: rotate(45deg) translate(2px, 2px); opacity: 1; }
+}
+
+/* ================================================ showcase (beans band) ==
+   Fills the space that the old 220vh scrub left blank. Packaging floats over a
+   dark macro-beans backdrop. */
+.showcase {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  min-height: min(90vh, 760px);
+  display: grid;
+  align-items: center;
+  padding-block: clamp(3rem, 8vw, 6rem);
+}
+.showcase__bg { position: absolute; inset: 0; z-index: -2; }
+.showcase__bg img { width: 100%; height: 100%; object-fit: cover; }
+.showcase__scrim {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(120% 85% at 50% 42%, transparent 28%,
+      color-mix(in srgb, var(--bean) 68%, transparent) 100%),
+    linear-gradient(180deg,
+      color-mix(in srgb, var(--bean) 52%, transparent),
+      color-mix(in srgb, var(--amber-deep) 22%, transparent));
+}
+.showcase__inner {
+  display: grid;
+  gap: clamp(1.5rem, 4vw, 3rem);
+  justify-items: center;
+  text-align: center;
+  color: var(--cream);
+}
+/*
+ * The copy's own plate — the dark-ground twin of `.act__band::before`.
+ *
+ * `.showcase__scrim`'s radial is TRANSPARENT to 28% and the copy is centred, so
+ * the words land on bare beans in the one place the scrim protects least.
+ * Measured cream-on-photo there: **3.56:1, FAIL**. Same shape of bug as the
+ * stage's edges-only wash — protection everywhere except where the words are.
+ *
+ * Fixed the way the floor was: locally, not by darkening the whole scrim, which
+ * would bury the photograph this section exists to show. Swept against the real
+ * image, worst cell:
+ *
+ *   0.00   3.56:1   FAIL
+ *   0.25   5.09:1   the pass threshold
+ *   0.40   6.54:1   <- shipped, in line with journey (6.67) and quality (6.46)
+ *
+ * The SHAPE matters as much as the strength, and the first attempt got it wrong.
+ * A gradient is painted only inside its element's box, so if it has not reached
+ * transparent by the box edge, CSS clips it into a hard rectangle: at
+ * `inset: -12% -8%` with `120% 130%` radii the corners still carried alpha 0.40
+ * and a bean-coloured rectangle sat on the photograph — the cream-rectangle
+ * failure in mirror image, caught by rendering it (.render/showcase-scrim.png).
+ *
+ * So the box is bled far wider than the words and the ellipse is sized to die
+ * inside it: radii of 50%/50% reach zero at the box edge and are already past
+ * it at the corners. Measured alpha anywhere on the box perimeter: 0.000.
+ * Change the inset or the radii and re-check both numbers — the contrast over
+ * the text AND the alpha at the seam.
+ */
+.showcase__copy {
+  position: relative;
+  isolation: isolate;
+}
+.showcase__copy::before {
+  content: '';
+  position: absolute;
+  inset: -60% -25%;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(
+    50% 50% at 50% 50%,
+    color-mix(in srgb, var(--bean) 40%, transparent) 0%,
+    color-mix(in srgb, var(--bean) 40%, transparent) 45%,
+    transparent 100%
+  );
+}
+
+.showcase__eyebrow { color: color-mix(in srgb, var(--cream) 78%, transparent); }
+.showcase__line {
+  font-family: var(--font-display, inherit);
+  font-size: var(--step-4);
+  line-height: 1.05;
+  color: var(--cream);
+}
+.showcase__stage {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+.showcase__stage .float { filter: drop-shadow(0 32px 42px rgba(0, 0, 0, 0.5)); }
+.showcase__stage .float--pouch { width: min(46%, 520px); }
+.showcase__stage .float--cup {
+  width: min(26%, 300px);
+  margin-inline-start: -2%;
+  align-self: flex-start;
+  margin-block-start: min(6vw, 70px);
+}
+@media (max-width: 620px) {
+  .showcase__stage .float--pouch { width: 56%; }
+  .showcase__stage .float--cup { width: 33%; }
+}
+
+/* Collapse the dead space under the origin story: the 220vh was scroll room for
+   a scrub that no longer exists, so the panel is now a normal two-column block.
+
+   Verified rather than assumed: `OriginCopy` renders `OriginClip` (a poster or
+   video), and `OriginSequence` — the scrubbed canvas the scroll room was cut for
+   — is imported by nothing. Two viewports of empty page were being reserved for
+   a component that never mounts. */
+@media (min-width: 60rem) {
+  .origin { min-height: 0; }
+  .origin__media {
+    position: static;
+    inset-block-start: auto;
+    height: auto;
+    aspect-ratio: 4 / 5;
+  }
 }
