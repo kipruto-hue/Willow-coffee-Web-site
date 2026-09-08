@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { generalOrderLink } from '../lib/whatsapp';
+import { useAppStore } from '../store/useAppStore';
 
 /**
  * The persistent order affordance (master prompt §2, §12.5): reachable in one
@@ -11,14 +12,21 @@ import { generalOrderLink } from '../lib/whatsapp';
  * is inert so it cannot be tabbed to invisibly.
  */
 export function StickyCTA() {
-  const [hidden, setHidden] = useState(false);
+  const [footerVisible, setFooterVisible] = useState(false);
+  /*
+   * Also hidden in the hero: the hero has its own two CTAs a few pixels away,
+   * and a floating pill on top of them is noise on the one screen that does not
+   * need it. Everywhere else the order affordance is still one tap away (§2).
+   */
+  const inHero = useAppStore((s) => s.activeAct === 'hero');
+  const hidden = footerVisible || inHero;
 
   useEffect(() => {
     const footer = document.querySelector('footer');
     if (!footer) return;
 
     const observer = new IntersectionObserver(
-      ([entry]) => setHidden(Boolean(entry?.isIntersecting)),
+      ([entry]) => setFooterVisible(Boolean(entry?.isIntersecting)),
       { rootMargin: '0px 0px -20% 0px' },
     );
     observer.observe(footer);

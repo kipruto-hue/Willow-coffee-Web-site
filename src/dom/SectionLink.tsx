@@ -12,6 +12,7 @@ export function SectionLink({
   children,
   onNavigate,
   current,
+  'aria-label': ariaLabel,
 }: {
   target: string;
   className?: string;
@@ -19,6 +20,11 @@ export function SectionLink({
   onNavigate?: () => void;
   /** True when this link points at the section currently in view. */
   current?: boolean;
+  /**
+   * For links whose visible text is decorative rather than descriptive — the
+   * scroll guide is a line and a dot, which names nothing on its own.
+   */
+  'aria-label'?: string;
 }) {
   const handle = (e: MouseEvent<HTMLAnchorElement>) => {
     // Let modified clicks (new tab, download, etc.) behave natively.
@@ -35,6 +41,7 @@ export function SectionLink({
       href={`#${target}`}
       className={className}
       onClick={handle}
+      aria-label={ariaLabel}
       aria-current={current ? 'true' : undefined}
     >
       {children}

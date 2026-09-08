@@ -647,3 +647,63 @@ site and should be recropped or reshot before anyone else sees this.
 - COFFEELINK footage — now urgent rather than a footnote (above).
 - Launch blockers unchanged: placeholder WhatsApp number, no harvest footage, no deploy target.
 - The clips still do not move: `sources` is empty for every entry in `videoManifest.ts`.
+
+---
+
+## Session 09b — 2026-09-08 — the hero comes off the stage
+
+Erick supplied a diff and said continue with it. It rebuilds Act 1 as a bright split layout — copy on
+one side, one sharp image on the other, on a warm gradient the section paints itself — plus a centred
+`ScrollGuide` line, a filmic grain on the Act 2 canvas, and a StickyCTA that hides in the hero.
+
+The diff was cut against `223c1a2`, before the scrim work, so it was applied three-way and reconciled
+rather than dropped on top.
+
+### What the diff changes about today's earlier fix
+
+The hero **leaves the video stage entirely**: `.hero` paints its own background even under
+`[data-webgl='true']` and sets `.hero::before { content: none }`. So the hero copy is on a known
+colour, not on a photograph, and it needs neither the amber scrim nor the `.act__band` plate. Both
+were removed from it, along with the now-dead `heroScrimAlpha`/`AMBER_YELLOW` machinery in the checker.
+
+`check-stage-contrast.ts` no longer measures the hero, and that absence is deliberate: this script's
+job is copy over footage. Measuring the hero would report a number for a stack the browser never
+composites. Copy on a known colour is `contrast.test.ts`'s job. `hero.jpg` still appears there — it is
+the **journey** act's clip.
+
+The `.act__band` plate stays exactly as shipped for journey, product and quality, which are still on
+the stage. Worst cell **6.46:1** (product/quality), journey **6.67:1**.
+
+### Two things reconciled that the diff assumed
+
+- **`SectionLink` did not accept `aria-label`.** `ScrollGuide` passes one, so it would not have
+  typechecked. The prop is now declared and forwarded — the guide's visible content is a line and a
+  dot, which names nothing on its own.
+- **The hero band geometry came out of the renderer.** With Act 1 gone from the stage, both rendered
+  files are now the same shape: a stage act's copy band over its footage.
+
+### The fog had a second cause nobody had named
+
+`hero.jpg` is **720×1280** — a portrait phone shot. As a full-bleed background on a 1440×900 viewport
+it was upscaled ~2× and cropped hard, then drifted at `scale(1.03–1.09)` on top of that. A good part of
+what read as "fog" was resolution, not only the 62% floor. In the new `.hero__media` figure it renders
+near native size in a 4/5 frame, which is the right use of the asset.
+
+This does not change the stage acts: journey/product/quality still stretch the same 720px-wide stills
+full-bleed. Worth remembering when the real clips are specified — **shoot or encode wider than 720px**.
+
+### Verified
+
+- 56 tests green, typecheck clean, `npm run build` green, bundle **123.9KB gz** / 400KB (CSS 5.0 → 5.6KB
+  gz for the rebuild), no `three` chunk.
+- `npm run check:contrast` — three stage acts pass, worst **6.46:1**.
+- Prerender picks the new hero up: `hero__media`, `scroll-guide` and the guide's `aria-label` are all in
+  `dist/index.html`, so it is in the no-JS render too.
+- **Still not seen in a browser by me** — the extension would not connect. Dev server live on 5173.
+
+### Open
+
+- The hero clip still crossfades on the stage behind an opaque hero. Harmless, but it is a clip nobody
+  can see; if Act 1 stays off the stage, the manifest entry could go.
+- COFFEELINK footage — still the most visible problem, and unaffected by the hero rebuild.
+- Launch blockers unchanged: placeholder WhatsApp number, no harvest footage, no deploy target.

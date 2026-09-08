@@ -56,14 +56,14 @@ for (const name of ['hero', 'product']) {
   ctx.fillStyle = wash;
   ctx.fillRect(0, 0, VW, VH);
 
-  // 4. the hero's own amber scrim
-  if (name === 'hero') {
-    const scrim = ctx.createLinearGradient(0, VH, VW * 0.62, 0);
-    scrim.addColorStop(0, 'rgba(241, 200, 45, 0.55)');
-    scrim.addColorStop(1, 'rgba(241, 200, 45, 0)');
-    ctx.fillStyle = scrim;
-    ctx.fillRect(0, 0, VW, VH);
-  }
+  /*
+   * The hero's amber scrim used to be drawn here. It is gone because the hero
+   * act is gone from the stage: it was rebuilt as a bright split layout that
+   * paints its own background and cancels `.hero::before` under [data-webgl].
+   *
+   * `hero.jpg` is still rendered — it is the JOURNEY act's clip — so both files
+   * now show the same thing: a stage act's copy band over its footage.
+   */
 
   /*
    * 5. `.act__band::before` — the local cream plate behind the copy.
@@ -76,9 +76,9 @@ for (const name of ['hero', 'product']) {
    * Same band box the checker samples, bled by `inset: -3% -4%`.
    */
   const bx = VW * 0.06;
-  const by = VH * (name === 'hero' ? 0.3 : 0.16);
-  const bw = VW * (name === 'hero' ? 0.56 : 0.62);
-  const bh = VH * (name === 'hero' ? 0.34 : 0.3);
+  const by = VH * 0.16;
+  const bw = VW * 0.62;
+  const bh = VH * 0.3;
   const px0 = bx - bw * 0.04;
   const py0 = by - bh * 0.03;
   const pw = bw * 1.08;
@@ -98,12 +98,12 @@ for (const name of ['hero', 'product']) {
   // the copy, in the act's real colour, where the checker samples it
   ctx.fillStyle = '#371101';
   ctx.font = '600 15px sans-serif';
-  ctx.fillText('SINGLE ORIGIN — NORTH RIFT, KENYA', VW * 0.06, VH * (name === 'hero' ? 0.3 : 0.17));
+  ctx.fillText('SINGLE ORIGIN — NORTH RIFT, KENYA', VW * 0.06, VH * 0.17);
   ctx.font = '700 64px serif';
-  ctx.fillText('Grown in the', VW * 0.06, VH * (name === 'hero' ? 0.38 : 0.25));
-  ctx.fillText('high country', VW * 0.06, VH * (name === 'hero' ? 0.46 : 0.33));
+  ctx.fillText('Grown in the', VW * 0.06, VH * 0.25);
+  ctx.fillText('high country', VW * 0.06, VH * 0.33);
   ctx.font = '20px sans-serif';
-  ctx.fillText('The body copy that has to stay readable over this frame.', VW * 0.06, VH * (name === 'hero' ? 0.54 : 0.41));
+  ctx.fillText('The body copy that has to stay readable over this frame.', VW * 0.06, VH * 0.41);
 
   await writeFile(`.render/stage-${name}.png`, canvas.toBuffer('image/png'));
   console.log(`.render/stage-${name}.png  (floor ${FLOOR})`);

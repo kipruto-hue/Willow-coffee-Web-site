@@ -107,20 +107,8 @@ interface Region {
   y: number;
   w: number;
   h: number;
-  /** The hero's own amber scrim (`.hero::before`); model it where it applies. */
-  heroScrim?: boolean;
   /** `.act__band::before` — the feathered cream plate behind this act's copy. */
   bandScrim?: boolean;
-}
-
-/**
- * `:root[data-webgl='true'] .hero::before`
- * linear-gradient(100deg, amber-yellow 55% -> transparent at 62%).
- */
-const AMBER_YELLOW: Rgb = { r: 0xf1, g: 0xc8, b: 0x2d };
-function heroScrimAlpha(xf: number): number {
-  const t = Math.min(1, Math.max(0, xf / 0.62));
-  return 0.55 * (1 - t);
 }
 
 /**
@@ -159,8 +147,18 @@ function bandScrimAlpha(bx: number, by: number): number {
  * Left-aligned within `.shell`, so the band is the upper-left two-thirds.
  */
 const REGIONS: Region[] = [
-  // .hero { color: var(--bean) }, over the amber scrim `.hero::before` lays down.
-  { act: 'hero', poster: 'hero', text: BEAN, textName: 'bean', x: 0.06, y: 0.3, w: 0.56, h: 0.34, heroScrim: true, bandScrim: true },
+  /*
+   * The hero is NOT here any more, and its absence is the point.
+   *
+   * It was rebuilt as a bright split layout that paints its own background and
+   * cancels its scrim even under [data-webgl], so no footage reaches it. Copy on
+   * a known colour is `contrast.test.ts`'s job — the brand's colour pairings.
+   * This script only measures copy that is genuinely over a photograph, and
+   * measuring the hero here would report a number for a stack the browser never
+   * composites.
+   *
+   * `hero.jpg` still appears below: it is the JOURNEY act's clip.
+   */
   /*
    * .journey's section band. It used to be the one light-on-dark act, and on the
    * dark stage that was right. On a light stage cream copy over cream floor is
@@ -244,7 +242,6 @@ for (const region of REGIONS) {
           // base -> footage through the feather mask -> top/bottom wash
           let px = mix(stageBase(yf), footage, maskAlpha(xf, yf));
           px = mix(px, CREAM, washAlpha(yf));
-          if (region.heroScrim) px = mix(px, AMBER_YELLOW, heroScrimAlpha(xf));
           if (region.bandScrim) {
             // Position within the band's bled box (inset: -3% -4% of the band).
             const bw = w * 1.08;
