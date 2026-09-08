@@ -73,29 +73,35 @@
 }
 
 /*
- * A FLOOR, not a vignette. (The same rule the dark stage learned, in mirror.)
+ * A FLOOR — now a thin one, because the protection moved to the words.
  *
- * This was an edges-only wash: cream at the top and bottom, clear through the
- * middle. The middle is exactly where every act's copy band sits, so measured
- * against the real posters (`npm run check:contrast`, worst cell not mean)
- * ALL FOUR acts came back at 1.00:1 — bean copy landing on rgb(44, 24, 9)
- * footage. Lifting only the edges protects the corners and abandons the words.
+ * History, because the number looks alarming next to what it used to be:
  *
- * So: a flat cream floor across the whole frame, with the edge wash on top of
- * it. Measured worst cell, by floor strength:
+ *   edges-only wash   all four acts 1.00:1   copy invisible on the footage
+ *   flat floor 0.62   worst 6.02:1           legible, but the photographs read
+ *                                            as fog over a photo, not as film
+ *   floor 0.12 + a local scrim on each copy band   worst 6.46:1
  *
- *   0.50  3.92:1  FAIL
- *   0.58  5.07:1  the pass threshold
- *   0.62  5.72:1  <- shipped, ~27% headroom over AA
+ * The floor's only job was ever legibility, and it did that job by washing out
+ * the ENTIRE frame — including every part of the picture with no words on it.
+ * `.act__band::before` (components.css) now lays a feathered cream plate behind
+ * the exposed copy in all four acts, which is the fix the 0.62 comment itself
+ * called for: "the fix is a local scrim on the act that needs it — never a
+ * weaker floor here". The scrim came first; the floor followed it down.
  *
- * AA body text needs 4.5:1. The headroom is deliberate: these numbers come from
- * the poster STILLS, and the encoded clips that replace them will bring frames
- * the posters never showed. Do not lower this to make the footage more vivid.
- * If a clip reads too faded once real footage lands, the fix is a local scrim
- * on the act that needs it (`.hero::before` is already one) — never a weaker
- * floor here, because the copy is over ALL of it, on every device, including
- * the phones and reduced-motion visitors who get the poster and never see a
- * frame of video at all.
+ * So this 0.12 is NOT the 0.50 that failed at 3.92:1. That was a bare floor
+ * carrying the copy alone. Do not read the two numbers as comparable, and do
+ * not lower this further on the theory that 0.12 was fine so 0 will be — what
+ * is holding the copy up is the plate, so if a future act adds copy on the
+ * stage, give it `.act__band` rather than touching this.
+ *
+ * A local plate is also the more robust half of the trade once real clips land:
+ * a bright or dark frame barely moves a value under 86% cream, where the same
+ * frame moved a 62% global floor a great deal. Re-run `npm run check:contrast`
+ * and `npm run render:stage` when the footage arrives.
+ *
+ * What is left here is a grade, not a rescue: just enough cream to unify the
+ * clips with the warm base so a cut between them does not jump.
  */
 #video-stage::after {
   content: '';
@@ -110,7 +116,7 @@
       transparent 78%,
       color-mix(in srgb, var(--cream) 30%, transparent) 100%
     ),
-    color-mix(in srgb, var(--cream) 62%, transparent);
+    color-mix(in srgb, var(--cream) 12%, transparent);
 }
 
 /* A whisper of static grain — enough to avoid a plasticky look, not enough to

@@ -16,11 +16,13 @@ export function HeroCopy() {
   return (
     <section id="hero" ref={ref} className="act hero on-vivid" aria-labelledby="hero-title">
       <div className="shell hero__inner">
-        <p className="eyebrow">{hero.eyebrow}</p>
-        <h1 id="hero-title" className="h-display">
-          {hero.h1}
-        </h1>
-        <p className="hero__sub">{hero.sub}</p>
+        <div className="act__band">
+          <p className="eyebrow">{hero.eyebrow}</p>
+          <h1 id="hero-title" className="h-display">
+            {hero.h1}
+          </h1>
+          <p className="hero__sub">{hero.sub}</p>
+        </div>
         <div className="hero__actions">
           <SectionLink target={hero.primaryCta.target} className="btn btn--primary">
             {hero.primaryCta.label}

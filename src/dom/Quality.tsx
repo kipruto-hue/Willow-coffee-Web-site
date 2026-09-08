@@ -17,13 +17,15 @@ export function Quality() {
   return (
     <section id="quality" ref={ref} className="act quality" aria-labelledby="quality-title">
       <div className="shell">
-        <p className="eyebrow">{quality.eyebrow}</p>
-        <h2 id="quality-title" className="h-act" style={{ marginBlockStart: 'var(--space-s)' }}>
-          {quality.h2}
-        </h2>
-        <p className="lede measure" style={{ marginBlockStart: 'var(--space-m)' }}>
-          {quality.intro}
-        </p>
+        <div className="act__band">
+          <p className="eyebrow">{quality.eyebrow}</p>
+          <h2 id="quality-title" className="h-act" style={{ marginBlockStart: 'var(--space-s)' }}>
+            {quality.h2}
+          </h2>
+          <p className="lede measure" style={{ marginBlockStart: 'var(--space-m)' }}>
+            {quality.intro}
+          </p>
+        </div>
 
         <div className="credentials">
           {credentials.map((credential) => (

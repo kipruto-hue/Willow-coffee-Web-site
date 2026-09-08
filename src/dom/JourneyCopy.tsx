@@ -15,10 +15,12 @@ export function JourneyCopy() {
       aria-labelledby="journey-title"
     >
       <div className="shell">
-        <p className="eyebrow">{journey.eyebrow}</p>
-        <h2 id="journey-title" className="h-act" style={{ marginBlockStart: 'var(--space-s)' }}>
-          {journey.h2}
-        </h2>
+        <div className="act__band">
+          <p className="eyebrow">{journey.eyebrow}</p>
+          <h2 id="journey-title" className="h-act" style={{ marginBlockStart: 'var(--space-s)' }}>
+            {journey.h2}
+          </h2>
+        </div>
 
         <ol className="journey__steps" style={{ listStyle: 'none', padding: 0 }}>
           {journeySteps.map((step) => (

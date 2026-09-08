@@ -564,3 +564,86 @@ Two things NOT to read into it while looking:
 
 **Still not confirmed by me in a browser.** The extension would not connect; the server is verified by
 HTTP only. Erick is the first person to actually look at this site.
+
+---
+
+## Session 09 — 2026-09-08 — the floor comes down, the pictures come up
+
+Erick: *"could you make the pictures in the background more visible than the lighter background"* —
+the open fade question from session 08, answered. The footage wins.
+
+The rule that was already written down said how: the floor may only come down if the copy gets a
+local scrim first. So the scrim came first.
+
+### `.act__band` — a plate where the words are
+
+`.hero::before` was already doing this job for one act. It is now the pattern rather than the
+exception: the exposed section copy (eyebrow + heading + lede) in hero, journey, product and quality
+is wrapped in `.act__band`, and `:root[data-webgl='true'] .act__band::before` lays a feathered cream
+plate behind it — a radial at 86%, held flat to 45% and faded to nothing well before the band's own
+edges, bleeding `-3% -4%` past the text so the feather finishes outside the words.
+
+The cards were never touched: `.step` has its bean plate, `.card` is solid cream, neither was ever on
+the stage.
+
+With that carrying the copy, the floor's only remaining job is grade — and it fell **0.62 → 0.12**.
+
+### The measurement was wrong, in the flattering direction
+
+The first sweep said the scrim did nothing: every act still failed at a low floor, exactly as before.
+That was the model, not the CSS.
+
+`maskAlpha` and the renderer both treated `radial-gradient(130% ...)` as a radius of `1.3 × W / 2`.
+A CSS gradient size percentage is a **radius resolved against the box**: `1.3 × W`. Both understated
+the gradient's reach by 2×, so the model believed the footage feathered out into pale base twice as
+fast as it does — putting cream under copy that in reality has photograph under it, and reporting a
+better number than the browser would show. `render-stage.ts` had the same halved radius, which is why
+the picture and the number had always agreed with each other while both differed from Chrome.
+
+This is a **pre-existing bug**: it predates today and it means the shipped 0.62 was never as safe as
+recorded. Corrected, the old configuration's true worst cell was **6.02:1**, not 5.72:1 for the reason
+claimed — different acts, different reasoning, right ballpark by luck.
+
+Fixed in all three places. Re-measured honestly:
+
+```
+floor 0.62 + band scrim    10.68:1
+floor 0.30 + band scrim     7.82:1
+floor 0.12 + band scrim     6.46:1   <- shipped
+floor 0.00 + band scrim     5.65:1
+```
+
+Every act passes at **any** floor now, including zero, because the plate — not the floor — is what
+holds the copy up. 0.12 is chosen as a grade that keeps the clips unified with the warm base so a
+crossfade does not jump, not as a rescue. Shipped headroom is **6.46:1 vs the old configuration's real
+6.02:1**: better than what was there, with the footage at ~88% strength instead of ~38%.
+
+### Rendered it
+
+`npm run render:stage` now draws the plate too — render without it and the picture shows vivid footage
+under unprotected copy, a version that does not exist.
+
+- **The photographs read as photographs.** The hero beans have colour and depth again; the fog is gone.
+- **The plate is invisible as a shape.** It feathers; there is no cream rectangle on the picture.
+- **The copy is crisp**, and crisper than it was at 0.62.
+
+### Verified
+
+- 56 tests green, typecheck clean, `npm run build` green, bundle guard **123.3KB gz** / 400KB, no `three` chunk.
+- `npm run check:contrast` — all four acts pass, worst **6.46:1** against AA's 4.5:1.
+- Dev server live on 5173 throughout; HMR picked the change up.
+- **Still not seen in a browser by me.** The extension would not connect for the third session running.
+  Everything above is composited pixels and build output.
+
+### Consequence worth naming
+
+Lowering the floor made the **COFFEELINK cup markedly more legible** — it was faint under 62% cream and
+is now clearly another brand's logo, centre-frame, in the product act. The floor had been hiding it.
+It was already flagged `replace: true` in `videoManifest.ts`; it is now the most visible problem on the
+site and should be recropped or reshot before anyone else sees this.
+
+### Open
+
+- COFFEELINK footage — now urgent rather than a footnote (above).
+- Launch blockers unchanged: placeholder WhatsApp number, no harvest footage, no deploy target.
+- The clips still do not move: `sources` is empty for every entry in `videoManifest.ts`.

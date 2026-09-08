@@ -13,7 +13,7 @@
 import { loadImage, createCanvas } from '@napi-rs/canvas';
 import { writeFile } from 'node:fs/promises';
 
-const FLOOR = Number(process.argv[2] ?? 0.62);
+const FLOOR = Number(process.argv[2] ?? 0.12);
 const VW = 1440;
 const VH = 900;
 
@@ -37,7 +37,8 @@ for (const name of ['hero', 'product']) {
   const dh = image.height * scale;
   lctx.drawImage(image, (VW - dw) / 2, (VH - dh) / 2, dw, dh);
   lctx.globalCompositeOperation = 'destination-in';
-  const mask = lctx.createRadialGradient(VW * 0.5, VH * 0.45, 0, VW * 0.5, VH * 0.45, VW * 0.65);
+  // 130% of the box WIDTH is the radius (see maskAlpha in check-stage-contrast.ts).
+  const mask = lctx.createRadialGradient(VW * 0.5, VH * 0.45, 0, VW * 0.5, VH * 0.45, VW * 1.3);
   mask.addColorStop(0.6, 'rgba(0,0,0,1)');
   mask.addColorStop(1, 'rgba(0,0,0,0)');
   lctx.fillStyle = mask;
@@ -63,6 +64,36 @@ for (const name of ['hero', 'product']) {
     ctx.fillStyle = scrim;
     ctx.fillRect(0, 0, VW, VH);
   }
+
+  /*
+   * 5. `.act__band::before` — the local cream plate behind the copy.
+   *
+   * Drawn before the words for the same reason the browser paints it behind
+   * them, and drawn AT ALL because this is the layer that let the floor fall
+   * from 0.62 to 0.12. Render without it and the picture shows vivid footage
+   * under unprotected copy, which is a version that does not exist.
+   *
+   * Same band box the checker samples, bled by `inset: -3% -4%`.
+   */
+  const bx = VW * 0.06;
+  const by = VH * (name === 'hero' ? 0.3 : 0.16);
+  const bw = VW * (name === 'hero' ? 0.56 : 0.62);
+  const bh = VH * (name === 'hero' ? 0.34 : 0.3);
+  const px0 = bx - bw * 0.04;
+  const py0 = by - bh * 0.03;
+  const pw = bw * 1.08;
+  const ph = bh * 1.06;
+  ctx.save();
+  // radial-gradient(130% 120% at 30% 50%) — an ellipse, so scale a circle.
+  ctx.translate(px0 + pw * 0.3, py0 + ph * 0.5);
+  ctx.scale(pw * 1.3, ph * 1.2);
+  const plate = ctx.createRadialGradient(0, 0, 0, 0, 0, 1);
+  plate.addColorStop(0, 'rgba(247, 240, 218, 0.86)');
+  plate.addColorStop(0.45, 'rgba(247, 240, 218, 0.86)');
+  plate.addColorStop(1, 'rgba(247, 240, 218, 0)');
+  ctx.fillStyle = plate;
+  ctx.fillRect(-2, -2, 4, 4);
+  ctx.restore();
 
   // the copy, in the act's real colour, where the checker samples it
   ctx.fillStyle = '#371101';

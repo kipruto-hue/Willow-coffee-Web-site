@@ -102,13 +102,15 @@ export function Products() {
   return (
     <section id="product" ref={ref} className="act product" aria-labelledby="product-title">
       <div className="shell">
-        <p className="eyebrow">{product.eyebrow}</p>
-        <h2 id="product-title" className="h-act" style={{ marginBlockStart: 'var(--space-s)' }}>
-          {product.h2}
-        </h2>
-        <p className="lede measure" style={{ marginBlockStart: 'var(--space-m)' }}>
-          {product.intro}
-        </p>
+        <div className="act__band">
+          <p className="eyebrow">{product.eyebrow}</p>
+          <h2 id="product-title" className="h-act" style={{ marginBlockStart: 'var(--space-s)' }}>
+            {product.h2}
+          </h2>
+          <p className="lede measure" style={{ marginBlockStart: 'var(--space-m)' }}>
+            {product.intro}
+          </p>
+        </div>
 
         <div className="product__grid">
           {products.map((item) => (

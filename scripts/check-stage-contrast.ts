@@ -54,11 +54,22 @@ const mix = (a: Rgb, b: Rgb, t: number): Rgb => ({
 /** #video-stage background: cream at the top to marigold-22%-on-cream at the bottom. */
 const stageBase = (yFraction: number): Rgb => mix(CREAM, mix(CREAM, MARIGOLD, 0.22), yFraction);
 
-/** .clip__media mask: radial-gradient(130% 100% at 50% 45%, #000 60%, transparent 100%). */
+/**
+ * `.clip__media` mask: radial-gradient(130% 100% at 50% 45%, #000 60%, transparent 100%).
+ *
+ * A CSS gradient's size percentages are RADII, resolved against the box: 130%
+ * means a horizontal radius of 1.3 * width, not 1.3 * half-width. This modelled
+ * it as the latter (an extra `* 2` on the distance) and so believed the footage
+ * feathered out twice as fast as it does — reporting pale BASE under copy that
+ * in reality has photograph under it. That flatters every number, which is the
+ * wrong direction for a check whose whole job is to catch dark footage under
+ * dark words. `render-stage.ts` had the same halved radius, so the picture and
+ * the number agreed with each other and both differed from the browser.
+ */
 function maskAlpha(xf: number, yf: number): number {
   const dx = (xf - 0.5) / 1.3;
   const dy = (yf - 0.45) / 1.0;
-  const d = Math.sqrt(dx * dx + dy * dy) * 2;
+  const d = Math.sqrt(dx * dx + dy * dy);
   if (d <= 0.6) return 1;
   if (d >= 1) return 0;
   return 1 - (d - 0.6) / 0.4;
@@ -76,7 +87,7 @@ function maskAlpha(xf: number, yf: number): number {
  *
  * Pass an alpha as argv[2] to sweep it; the default is the shipped value.
  */
-const FLOOR = Number(process.argv[2] ?? 0.62);
+const FLOOR = Number(process.argv[2] ?? 0.12);
 
 function washAlpha(yf: number): number {
   const edge = 0.3;
@@ -96,8 +107,10 @@ interface Region {
   y: number;
   w: number;
   h: number;
-  /** The hero alone already has a local scrim; model it where it applies. */
+  /** The hero's own amber scrim (`.hero::before`); model it where it applies. */
   heroScrim?: boolean;
+  /** `.act__band::before` — the feathered cream plate behind this act's copy. */
+  bandScrim?: boolean;
 }
 
 /**
@@ -108,6 +121,30 @@ const AMBER_YELLOW: Rgb = { r: 0xf1, g: 0xc8, b: 0x2d };
 function heroScrimAlpha(xf: number): number {
   const t = Math.min(1, Math.max(0, xf / 0.62));
   return 0.55 * (1 - t);
+}
+
+/**
+ * `:root[data-webgl='true'] .act__band::before` — the LOCAL cream plate.
+ *
+ * This is what lets the floor come down. The floor lifted the entire frame to
+ * keep four copy bands legible, which is why the photographs read as fog; the
+ * plate lifts only the area the words occupy and leaves the rest of the picture
+ * alone.
+ *
+ * Modelled in the band's OWN box, not the viewport, because that is how the CSS
+ * is written: `inset: -3% -4%` bleeds the plate past the text, and the radial
+ * `130% 120% at 30% 50%` holds 0.86 out to 45% before feathering to nothing.
+ * `bx`/`by` are the sample's position within that bled box, 0..1.
+ */
+const BAND_SCRIM = 0.86;
+function bandScrimAlpha(bx: number, by: number): number {
+  if (bx < 0 || bx > 1 || by < 0 || by > 1) return 0;
+  const dx = (bx - 0.3) / 1.3;
+  const dy = (by - 0.5) / 1.2;
+  const d = Math.sqrt(dx * dx + dy * dy);
+  if (d <= 0.45) return BAND_SCRIM;
+  if (d >= 1) return 0;
+  return BAND_SCRIM * (1 - (d - 0.45) / 0.55);
 }
 
 /**
@@ -123,7 +160,7 @@ function heroScrimAlpha(xf: number): number {
  */
 const REGIONS: Region[] = [
   // .hero { color: var(--bean) }, over the amber scrim `.hero::before` lays down.
-  { act: 'hero', poster: 'hero', text: BEAN, textName: 'bean', x: 0.06, y: 0.3, w: 0.56, h: 0.34, heroScrim: true },
+  { act: 'hero', poster: 'hero', text: BEAN, textName: 'bean', x: 0.06, y: 0.3, w: 0.56, h: 0.34, heroScrim: true, bandScrim: true },
   /*
    * .journey's section band. It used to be the one light-on-dark act, and on the
    * dark stage that was right. On a light stage cream copy over cream floor is
@@ -131,11 +168,11 @@ const REGIONS: Region[] = [
    * stage on (components.css) and the STEP CARDS keep their cream — they sit on
    * their own bean-78% plate and were never on the stage at all.
    */
-  { act: 'journey', poster: 'hero', text: BEAN, textName: 'bean', x: 0.06, y: 0.16, w: 0.62, h: 0.3 },
+  { act: 'journey', poster: 'hero', text: BEAN, textName: 'bean', x: 0.06, y: 0.16, w: 0.62, h: 0.3, bandScrim: true },
   // .product { color: var(--bean) } — heading band above the cards, over the pour.
-  { act: 'product', poster: 'product', text: BEAN, textName: 'bean', x: 0.06, y: 0.16, w: 0.62, h: 0.3 },
+  { act: 'product', poster: 'product', text: BEAN, textName: 'bean', x: 0.06, y: 0.16, w: 0.62, h: 0.3, bandScrim: true },
   // .quality { color: var(--bean) } — inherits the product clip.
-  { act: 'quality', poster: 'product', text: BEAN, textName: 'bean', x: 0.06, y: 0.16, w: 0.62, h: 0.3 },
+  { act: 'quality', poster: 'product', text: BEAN, textName: 'bean', x: 0.06, y: 0.16, w: 0.62, h: 0.3, bandScrim: true },
 ];
 
 /** Viewport the sampling models. Desktop is the wide case the vertical clips crop hardest. */
@@ -208,6 +245,14 @@ for (const region of REGIONS) {
           let px = mix(stageBase(yf), footage, maskAlpha(xf, yf));
           px = mix(px, CREAM, washAlpha(yf));
           if (region.heroScrim) px = mix(px, AMBER_YELLOW, heroScrimAlpha(xf));
+          if (region.bandScrim) {
+            // Position within the band's bled box (inset: -3% -4% of the band).
+            const bw = w * 1.08;
+            const bh = h * 1.06;
+            const bx = (x - (x0 - w * 0.04)) / bw;
+            const by = (y - (y0 - h * 0.03)) / bh;
+            px = mix(px, CREAM, bandScrimAlpha(bx, by));
+          }
           r += px.r;
           g += px.g;
           b += px.b;

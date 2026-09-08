@@ -992,6 +992,51 @@
   position: relative;
 }
 
+/* ------------------------------------------------------ the act copy band --
+ * A LOCAL scrim, so the FLOOR can come down and the footage can be seen.
+ *
+ * Erick's call: at a 0.62 cream floor the photographs read as fog over a photo
+ * rather than film. The floor was the only thing holding the copy up, and it
+ * held it up by washing out the whole frame — including all the parts with no
+ * words on them at all.
+ *
+ * So the protection moves to where the words actually are. `.act__band` wraps
+ * the exposed section copy (eyebrow + heading + lede) in journey, product and
+ * quality; the hero already had `.hero::before` doing this job, which is the
+ * pattern being extended rather than invented. The cards were never at risk —
+ * `.step` has its bean plate and `.card` is solid cream — so nothing here
+ * touches them, and the photograph between and below the bands is now the
+ * footage at close to full strength.
+ *
+ * The plate is feathered, not a rectangle. A hard-edged box of cream sitting on
+ * a photograph is worse than the problem it solves; this fades to nothing well
+ * before the band's own edges, which is why it bleeds outside them.
+ *
+ * `scripts/check-stage-contrast.ts` models THIS geometry — the 130%/120% radial
+ * at 30% 50%, the 0.86 plateau out to 45%, and the -4%/-3% bleed. Change either
+ * side and change both, then re-run `npm run check:contrast`.
+ */
+:root[data-webgl='true'] .act__band {
+  position: relative;
+  isolation: isolate;
+}
+
+:root[data-webgl='true'] .act__band::before {
+  content: '';
+  position: absolute;
+  /* Bleeds past the text so the feather finishes outside the words. */
+  inset: -3% -4%;
+  z-index: -1;
+  pointer-events: none;
+  border-radius: var(--radius);
+  background: radial-gradient(
+    130% 120% at 30% 50%,
+    color-mix(in srgb, var(--cream) 86%, transparent) 0%,
+    color-mix(in srgb, var(--cream) 86%, transparent) 45%,
+    transparent 100%
+  );
+}
+
 /*
  * Journey, on the video stage, flips to dark copy.
  *
