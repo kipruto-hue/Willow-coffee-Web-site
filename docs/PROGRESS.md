@@ -540,3 +540,27 @@ survived the floor that saved the words.
   its own. Eric's call, since it trades brand vividness against a number that is currently safe.
 - The COFFEELINK footage still has to be recropped or reshot.
 - Launch blockers unchanged: placeholder WhatsApp number, no harvest footage, no deploy target.
+
+### Serving it live (session 08)
+
+Erick: "i want to see live server on port 5173" — so the **dev** server this time, not `preview`:
+
+```
+npm run dev -- --port 5173 --strictPort
+```
+
+Vite ready in 3.6s; index and all four assets 200 (`/media/hero.jpg`, `/media/product.jpg`,
+`/media/origin.jpg`, `/brand/willow-logo.png`). Dev rather than `preview` on purpose: HMR means the floor
+strength in `media.css` and the journey flip can be judged and re-judged without a rebuild, and the fade
+is exactly the question that is open. Add `--host` to reach it from a phone on the same network.
+
+Two things NOT to read into it while looking:
+
+- The clips do not move. `sources` is empty for every entry in `videoManifest.ts`, so there is nothing but
+  poster stills yet — the layer stack, the crossfade and the scroll-gated pause are all in place but have
+  nothing to animate. What can be judged live is composition, floor strength, and whether the feathered
+  edges actually read as seamless.
+- The footage looking faded is the 62% floor doing its job, not a bug. It is the open call above.
+
+**Still not confirmed by me in a browser.** The extension would not connect; the server is verified by
+HTTP only. Erick is the first person to actually look at this site.
