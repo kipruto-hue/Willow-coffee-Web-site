@@ -8,6 +8,7 @@ import { Testimonials } from './dom/Testimonials';
 import { Contact } from './dom/Contact';
 import { Footer } from './dom/Footer';
 import { StickyCTA } from './dom/StickyCTA';
+import { StoryThread } from './dom/StoryThread';
 import { structuredData } from './lib/structuredData';
 
 /**
@@ -36,11 +37,17 @@ export function SiteContent() {
 
       <main id="content" tabIndex={-1}>
         <HeroCopy />
+        <StoryThread />
         <OriginCopy />
+        <StoryThread />
         <JourneyCopy />
+        <StoryThread />
         <Products />
+        <StoryThread />
         <Quality />
+        <StoryThread />
         <Testimonials />
+        <StoryThread />
         <Contact />
       </main>
 

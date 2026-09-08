@@ -707,3 +707,68 @@ full-bleed. Worth remembering when the real clips are specified — **shoot or e
   can see; if Act 1 stays off the stage, the manifest entry could go.
 - COFFEELINK footage — still the most visible problem, and unaffected by the hero rebuild.
 - Launch blockers unchanged: placeholder WhatsApp number, no harvest footage, no deploy target.
+
+---
+
+## Session 09c — 2026-09-08 — the story thread, and the packaging comes out of its box
+
+Erick's second diff, same `223c1a2` base, so its hero and Act 2 grain blocks were already applied in
+09b — only the genuinely new parts were taken: `StoryThread` between every section, the Product act's
+flat packaging photograph replaced by two floating cutouts, and the CSS for both.
+
+### The product act leaves the stage too
+
+`.product` now takes an opaque bright gradient under `[data-webgl='true']`, exactly as the hero did.
+So its copy is no longer over the pour, and `check-stage-contrast.ts` drops it for the same reason it
+dropped the hero — measuring it would report a number for a stack the browser never composites. The
+`.act__band` markup **stays** on it: the plate is harmless on a flat ground and would be needed again
+the moment that background comes off.
+
+Two acts are left on the stage. Journey **6.67:1**, quality **6.46:1**.
+
+`/brand/packaging-amber.jpg` is retired from the DOM with the flat shot, and its orphaned
+`.packaging__shot` rules are deleted. The file stays: it is the photograph the willow motif was traced
+against, and `docs/ASSETS.md` now says so instead of claiming it is in the Product act.
+
+### The cup did not fit its box
+
+`cup.png` arrived 1200×571 with the cup occupying only the right 60% — the left **40% was empty
+transparent padding**, not a shadow (measured: 4 stray pixels above alpha 8 in the whole region).
+
+`.float--cup { width: min(27%, 300px) }` sizes the *box*, so the visible cup would have rendered at
+~16% of the stage, and the `-2.5%` overlap with the pouch would have measured from an edge with nothing
+at it. This is the packaging-plane lesson again: derive the geometry from the pixels, not from the
+file's stated size.
+
+Trimmed to content, 717×569, and the layout lands — rendered at real CSS sizes to
+`.render/packaging-stage.png` rather than assumed: pouch 538×510, cup 300×238, row 72% of the stage.
+
+### 1.20MB of PNG for two images
+
+The supplied cutouts were 900KB and 330KB. That is roughly **ten times the site's entire JS+CSS budget**
+(124.3KB gz) in two files, on a page whose whole argument is that it stays light.
+
+They now go through the project's existing convention rather than sitting in `public/` as raw sources:
+originals moved to `assets-src/`, and `npm run build:brand` alpha-trims and encodes them to WebP q88 —
+**1.20MB → 174KB**, alpha intact, no visible difference on a cutout. The trim lives in the build, so
+re-running it from the untouched original reproduces 1200×571 → 717×569.
+
+`width`/`height` attributes are on both images (the diff had dropped the ones the old shot carried), so
+the floating stage does not shift as they load.
+
+### Verified
+
+- 56 tests green, typecheck clean, `npm run build` green, bundle **124.3KB gz** / 400KB, no `three` chunk.
+- `npm run check:contrast` — both remaining stage acts pass, worst **6.46:1**.
+- Prerender carries `packaging__stage`, both floats and `story-thread`; **zero** references to
+  `packaging-amber` remain in `dist/`.
+- `dist/media/pouch.webp` + `cup.webp` present, 176KB together.
+- **Still not seen in a browser by me** — the extension would not connect. Dev server live on 5173.
+
+### Open
+
+- Both the hero and product acts are now opaque, so the video stage shows through in **journey and
+  quality only**. The hero and product clips still crossfade behind opaque sections — clips nobody can
+  see. If this is the intended direction, `videoManifest.ts` can lose two entries.
+- COFFEELINK footage — still open, and now confined to the quality act.
+- Launch blockers unchanged: placeholder WhatsApp number, no harvest footage, no deploy target.

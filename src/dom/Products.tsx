@@ -125,16 +125,27 @@ export function Products() {
           * the DOM rather than the canvas on purpose: the lite path, phones and
           * reduced-motion visitors all get it, and they are the majority.
           */}
-        <figure className="packaging__shot">
+        <div className="packaging__stage">
           <img
-            src="/brand/packaging-amber.jpg"
-            width={1600}
-            height={945}
+            className="float float--pouch"
+            src="/media/pouch.webp"
+            width={1096}
+            height={1039}
+            alt="willow coffee 500g premium pouch in the brand amber gradient with the white willow-branch pattern"
             loading="lazy"
             decoding="async"
-            alt="willow coffee 500g premium pouch and matching cup, in the brand's amber gradient with the white willow-branch pattern"
           />
-        </figure>
+          <img
+            className="float float--cup"
+            src="/media/cup.webp"
+            width={717}
+            height={569}
+            alt=""
+            aria-hidden="true"
+            loading="lazy"
+            decoding="async"
+          />
+        </div>
 
         <div className="packaging">
           {packagingBlurbs.map((blurb) => (

@@ -167,8 +167,16 @@ const REGIONS: Region[] = [
    * their own bean-78% plate and were never on the stage at all.
    */
   { act: 'journey', poster: 'hero', text: BEAN, textName: 'bean', x: 0.06, y: 0.16, w: 0.62, h: 0.3, bandScrim: true },
-  // .product { color: var(--bean) } — heading band above the cards, over the pour.
-  { act: 'product', poster: 'product', text: BEAN, textName: 'bean', x: 0.06, y: 0.16, w: 0.62, h: 0.3, bandScrim: true },
+  /*
+   * The product act is not here either, for the same reason the hero is not:
+   * the floating-packaging rebuild gave `.product` an opaque bright gradient
+   * under [data-webgl], so its copy is on a known colour rather than on the
+   * pour. Its `.act__band` markup stays — the plate is harmless on a flat
+   * ground and would be needed again the moment that background comes off —
+   * but there is no footage under it to measure.
+   *
+   * `product.jpg` still appears below: it is the QUALITY act's clip.
+   */
   // .quality { color: var(--bean) } — inherits the product clip.
   { act: 'quality', poster: 'product', text: BEAN, textName: 'bean', x: 0.06, y: 0.16, w: 0.62, h: 0.3, bandScrim: true },
 ];

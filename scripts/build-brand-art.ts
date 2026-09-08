@@ -27,6 +27,7 @@ import { CUP_WRAP_ASPECT } from '../src/canvas/objects/packaging';
 type Ctx = CanvasRenderingContext2D;
 
 const OUT = 'public/brand';
+const OUT_MEDIA = 'public/media';
 mkdirSync(OUT, { recursive: true });
 mkdirSync('.render', { recursive: true });
 
@@ -169,6 +170,64 @@ for (const [src, out] of [
   ctx.drawImage(photo, 0, 0, W, H);
   writeFileSync(`${OUT}/${out}.jpg`, canvas.toBuffer('image/jpeg', 82));
   console.log(`${out}.jpg`, `${W}x${H}`);
+}
+
+/* ------------------------------------------- the packaging cutouts, resized --
+ * The pouch and cup as transparent cutouts, for the Product act's floating
+ * stage. Sources live in assets-src/ like every other supplied asset; what the
+ * browser gets is built here.
+ *
+ * WebP, and not as a micro-optimisation: the supplied PNGs are 900KB and 330KB.
+ * That is roughly ten times the site's entire JS+CSS budget (124KB gz) for two
+ * images, on a page whose whole point is that it stays light. At q88 with the
+ * alpha channel intact they come down to about 97KB and 68KB with no visible
+ * difference on a cutout — every browser the site targets has taken WebP with
+ * transparency for years.
+ *
+ * The cup is cropped to its own alpha before anything else. As supplied, 40% of
+ * its canvas was empty transparent padding, so `width: min(27%, 300px)` sized a
+ * box that was mostly nothing: the cup rendered at ~16% and the -2.5% overlap
+ * with the pouch never landed. Same lesson as the packaging plane — derive the
+ * geometry from the pixels, not from the file's stated size.
+ */
+for (const [src, out] of [
+  ['assets-src/pouch.png', 'pouch'],
+  ['assets-src/cup.png', 'cup'],
+] as const) {
+  const art = await loadImage(src);
+  const canvas = createCanvas(art.width, art.height);
+  const ctx = canvas.getContext('2d') as unknown as Ctx;
+  ctx.drawImage(art, 0, 0);
+
+  // Trim fully-transparent margins, ignoring isolated specks (>=3 px in a line).
+  const { data } = ctx.getImageData(0, 0, art.width, art.height);
+  const alphaAt = (x: number, y: number): number => data[(y * art.width + x) * 4 + 3] ?? 0;
+  let x0 = art.width;
+  let y0 = art.height;
+  let x1 = -1;
+  let y1 = -1;
+  for (let x = 0; x < art.width; x += 1) {
+    let n = 0;
+    for (let y = 0; y < art.height; y += 1) if (alphaAt(x, y) > 32) n += 1;
+    if (n >= 3) {
+      if (x < x0) x0 = x;
+      x1 = x;
+    }
+  }
+  for (let y = 0; y < art.height; y += 1) {
+    let n = 0;
+    for (let x = 0; x < art.width; x += 1) if (alphaAt(x, y) > 32) n += 1;
+    if (n >= 3) {
+      if (y < y0) y0 = y;
+      y1 = y;
+    }
+  }
+  const cw = x1 - x0 + 1;
+  const ch = y1 - y0 + 1;
+  const trimmed = createCanvas(cw, ch);
+  (trimmed.getContext('2d') as unknown as Ctx).drawImage(canvas, -x0, -y0);
+  writeFileSync(`${OUT_MEDIA}/${out}.webp`, trimmed.toBuffer('image/webp' as never, 88 as never));
+  console.log(`${out}.webp`, `${cw}x${ch}`, `(from ${art.width}x${art.height})`);
 }
 
 /* ------------------------------------------------------ the honesty check -- */
